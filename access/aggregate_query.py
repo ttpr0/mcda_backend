@@ -14,12 +14,14 @@ import config
 async def calcAggregateQuery(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], max_range: float, compute_type: str) -> np.ndarray:
     header = {'Content-Type': 'application/json'}
     body = {
-        "population": {
-            "population_locations": population_locations,
-            "population_weights": population_weights,
+        "demand": {
+            "demand_locations": population_locations,
+            "demand_weights": population_weights,
         },
-        "facility_locations": facility_locations,
-        "facility_values": facility_weights,
+        "supply": {
+            "supply_locations": facility_locations,
+            "supply_weights": facility_weights,
+        },
         "range": max_range,
         "compute_type": compute_type,
     }

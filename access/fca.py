@@ -13,12 +13,13 @@ import config
 async def calcFCA(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], range_factors: list[float], mode: str = "isochrones", travel_mode: str = "driving-car") -> np.ndarray:
     header = {'Content-Type': 'application/json'}
     body = {
-        "ranges": ranges,
-        "facility_locations": facility_locations,
-        "facility_capacities": facility_weights,
-        "population": {
-            "population_locations": population_locations,
-            "population_weights": population_weights,
+        "supply": {
+            "supply_locations": facility_locations,
+            "supply_weights": facility_weights,
+        },
+        "demand": {
+            "demand_locations": population_locations,
+            "demand_weights": population_weights,
         },
         "distance_decay": {
             "decay_type": "hybrid",
@@ -36,7 +37,7 @@ async def calcFCA(population_locations: list[tuple[float, float]], population_we
     loop = asyncio.get_running_loop()
     data = json.dumps(body)
     t1 = time.time()
-    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/fca", data=data, headers=header))
+    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/accessibility/fca", data=data, headers=header))
     t2 = time.time()
     print(f"time: {t2-t1}")
     accessibilities = response.json()

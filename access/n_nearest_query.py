@@ -14,12 +14,14 @@ import config
 async def calcNearestQuery(population_locations: list[tuple[float, float]], population_weights: list[int], envelop: tuple[float, float, float, float], facilities: list[tuple[float, float]], facility_weights: list[float], ranges: list[float]) -> np.ndarray:
     header = {'Content-Type': 'application/json'}
     body = {
-        "population": {
-            "population_locations": population_locations,
+        "demand": {
+            "demand_locations": population_locations,
             "envelop": envelop,
         },
-        "facility_locations": facilities,
-        "facility_values": facility_weights,
+        "supply": {
+            "supply_locations": facilities,
+            "supply_weights": facility_weights,
+        },
         "facility_count": 3,
         "range_type": "discrete",
         "ranges": ranges,
@@ -31,15 +33,18 @@ async def calcNearestQuery(population_locations: list[tuple[float, float]], popu
     arr: np.ndarray = np.array(accessibilities["result"])
     return arr
 
+
 async def calcNearestQuery2(population_locations: list[tuple[float, float]], envelop: tuple[float, float, float, float], facilities: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], facility_count: int, compute_type: str) -> tuple[list[float], str]:
     header = {'Content-Type': 'application/json'}
     body = {
-        "population": {
-            "population_locations": population_locations,
+        "demand": {
+            "demand_locations": population_locations,
             "envelop": envelop,
         },
-        "facility_locations": facilities,
-        "facility_values": facility_weights,
+        "supply": {
+            "supply_locations": facilities,
+            "supply_weights": facility_weights,
+        },
         "facility_count": facility_count,
         "range_type": "discrete",
         "ranges": ranges,
@@ -50,11 +55,14 @@ async def calcNearestQuery2(population_locations: list[tuple[float, float]], env
     accessibilities = response.json()
     return accessibilities["result"], accessibilities["session_id"]
 
+
 async def calcNearestQuery3(query_id: str, facility_weights: list[float], facility_count: int, compute_type: str) -> tuple[list[float], str]:
     header = {'Content-Type': 'application/json'}
     body = {
         "session_id": query_id,
-        "facility_values": facility_weights,
+        "supply": {
+            "supply_weights": facility_weights,
+        },
         "facility_count": facility_count,
         "compute_type": compute_type,
     }

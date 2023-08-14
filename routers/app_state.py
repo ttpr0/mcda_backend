@@ -1,6 +1,6 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-rom fastapi import APIRouter
+from fastapi import APIRouter
 from pydantic import BaseModel
 import requests
 import json

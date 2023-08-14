@@ -15,8 +15,8 @@ async def store_population(locations: list[tuple[float, float]], weights: list[i
     header = {'Content-Type': 'application/json'}
     body = {
         "population": {
-            "population_locations": locations,
-            "population_weights": weights,
+            "demand_locations": locations,
+            "demand_weights": weights,
         }
     }
     loop = asyncio.get_running_loop()
