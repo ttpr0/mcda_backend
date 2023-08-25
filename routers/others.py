@@ -285,7 +285,10 @@ async def multi_api(req: MultiCriteriaRequest):
             feature = features[i]
             access: float = float(array[i])
             feature.value[name] = access
-            feature.value[name + "_weighted"] = access / population_weights[i]
+            if population_weights[i] == 0:
+                feature.value[name + "_weighted"] = -9999
+            else:
+                feature.value[name + "_weighted"] = access / population_weights[i]
 
     extend = [minx-50, miny-50, maxx+50, maxy+50]
     dx = extend[2] - extend[0]

@@ -1,7 +1,7 @@
 version: '2.4'
 services:
-  oas-app:
-    container_name: oas-api
+  dvan-api:
+    container_name: dvan-api
     ports:
       - "5000:5000"
     user: "${UID:-0}:${GID:-0}"

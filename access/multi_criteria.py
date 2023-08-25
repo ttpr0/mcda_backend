@@ -21,6 +21,10 @@ async def calcMultiCriteria(population_id: str, infrastructures: dict[str, Infra
     multi: np.ndarray | None = None
     arrays: dict[str, np.ndarray] = {}
 
+    weight_sum = 0
+    for _, param in infrastructures.items():
+        weight_sum += param.infrastructure_weight
+
     for name, param in infrastructures.items():
         header = {'Content-Type': 'application/json'}
         body = {
@@ -28,7 +32,7 @@ async def calcMultiCriteria(population_id: str, infrastructures: dict[str, Infra
                 "supply_locations": param.facility_locations,
             },
             "demand": {
-                "view_id": population_id,
+                "demand_id": population_id,
             },
             "distance_decay": {
                 "decay_type": "hybrid",
@@ -42,7 +46,8 @@ async def calcMultiCriteria(population_id: str, infrastructures: dict[str, Infra
         arr: np.ndarray = np.array(accessibilities["access"])
         if multi is None:
             multi = np.zeros(arr.shape)
-        multi += param.infrastructure_weight * arr
+        weight = param.infrastructure_weight / weight_sum
+        multi += weight * arr
         arrays[name] = arr
     if multi is not None:
         arrays["multiCritera"] = multi

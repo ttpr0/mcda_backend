@@ -19,8 +19,8 @@ from helpers.facilities import get_facility
 from helpers.util import get_extent
 from access.fca import calcFCA
 
-from helpers.geoserver_api import add_featurestore, open_conncection
-from helpers.postgis_api import add_results
+# from helpers.geoserver_api import add_featurestore, open_conncection
+# from helpers.postgis_api import add_results
 
 from models import engine, PlanningArea, PhysiciansLocationBased, PhysiciansCountBased, PhysiciansList
 
