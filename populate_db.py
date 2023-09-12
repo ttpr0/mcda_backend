@@ -9,14 +9,14 @@ import hashlib
 from sqlalchemy.orm import Session
 
 import config
-from models import engine, PlanningArea, PhysiciansLocationBased, PhysiciansCountBased, SupplyLevelList, PhysiciansList, User, Population, Facility
+from models import ENGINE, PlanningArea, PhysiciansLocationBased, PhysiciansCountBased, SupplyLevelList, PhysiciansList, User, Population, Facility
 
 
 def insertAdminUser() -> None:
     users = [
         ("dvan@admin.org", "password")
     ]
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         for user in users:
             email = user[0]
             password = user[1]
@@ -32,7 +32,7 @@ def insertAdminUser() -> None:
 
 
 def insertPlanningAreas() -> None:
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         session.query(PlanningArea).delete()
         # load physicians data
         for file in os.listdir(config.PLANNING_AREAS_DIR):
@@ -48,7 +48,7 @@ def insertPlanningAreas() -> None:
         session.commit()
 
 def insertPhysicians() -> None:
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         session.query(PhysiciansLocationBased).delete()
         session.query(PhysiciansCountBased).delete()
         # load physicians data
@@ -78,7 +78,7 @@ def insertSupplyLevels() -> None:
         ('Spezialisten', 200),
         ('spezielle Spezialisten', 300)
     ]
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         session.query(SupplyLevelList).delete()
         # load physicians data
         for sl in supply_levels:
@@ -102,7 +102,7 @@ def insertPhysiciansList() -> None:
         ("Radiologen", 300, 304),
         ("Anästhesisten", 300, 301)
     ]
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         session.query(PhysiciansList).delete()
         # load physicians data
         for sl in physicians:
@@ -110,7 +110,7 @@ def insertPhysiciansList() -> None:
         session.commit()
 
 def insertPopulation() -> None:
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         session.query(Population).delete()
         # load population data
         with open(config.POPULATION_FILE, 'r') as file:
@@ -211,7 +211,7 @@ def insertFacilities():
                   "nursery", "ophthalmologist", "other_local_supply", "otolaryngologist", "paediatrician",
                   "pharmacy", "primary_school", "psychotherapist", "secondary_school_1", "secondary_school_2",
                   "supermarket", "surgeon", "urologist"]
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         for facility in facilities:
             with open(config.FACILITY_DIR + "/" + facility + ".geojson", "r") as file:
                 data = json.loads(file.read())

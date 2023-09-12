@@ -1,7 +1,16 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+from sqlalchemy import create_engine, Engine, MetaData
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import create_engine
+
+import config
+
+ENGINE: Engine = create_engine(f"postgresql+psycopg2://{config.POSTGIS_USER}:{config.POSTGIS_PASSWORD}@{config.POSTGIS_HOST}:5432/{config.POSTGIS_DB}")
+
+META_DATA: MetaData = MetaData()
+META_DATA.reflect(bind=ENGINE)
+
+from .util import create_table, get_table, delete_table
 
 Base = declarative_base()
 
@@ -11,9 +20,6 @@ from .physicians import PhysiciansCountBased, PhysiciansLocationBased, Physician
 from .population import Population
 from .facilities import Facility
 
-import config
-
-engine = create_engine(f"postgresql+psycopg2://{config.POSTGIS_USER}:{config.POSTGIS_PASSWORD}@{config.POSTGIS_HOST}:5432/{config.POSTGIS_DB}")
-Base.metadata.create_all(engine)
+Base.metadata.create_all(ENGINE)
 
 del Base

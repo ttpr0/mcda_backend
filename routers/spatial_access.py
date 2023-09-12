@@ -10,6 +10,7 @@ import asyncio
 import time
 import os
 import numpy as np
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from geoalchemy2.shape import to_shape
 
@@ -22,13 +23,14 @@ from access.fca import calcFCA
 # from helpers.geoserver_api import add_featurestore, open_conncection
 # from helpers.postgis_api import add_results
 
-from models import engine, PlanningArea, PhysiciansLocationBased, PhysiciansCountBased, PhysiciansList
+from models import ENGINE, PlanningArea, PhysiciansLocationBased, PhysiciansCountBased, PhysiciansList
 
 def getPlanningArea(supply_level: str, planning_area: str) -> Polygon|None:
-    with Session(engine) as session:
-        rows = session.query(PlanningArea).where(PlanningArea.name == planning_area)
+    with Session(ENGINE) as session:
+        stmt = select(PlanningArea.geom).where(PlanningArea.name == planning_area)
+        rows = session.execute(stmt).fetchall()
         for row in rows:
-            return to_shape(row.geom)
+            return to_shape(row[0])
         return None
 
 # planning_areas: dict|None = None
@@ -58,38 +60,42 @@ def getFacilities(query: Polygon, supply_level: str, facility_type: str, facilit
     locations = []
     weights = []
     
-    with Session(engine) as session:
-        rows = session.query(PhysiciansList).where(PhysiciansList.name == facility_type)
+    with Session(ENGINE) as session:
+        stmt = select(PhysiciansList.detail_id).where(PhysiciansList.name == facility_type)
+        rows = session.execute(stmt).fetchall()
         detail_id = None
         for row in rows:
-            detail_id = row.detail_id
+            detail_id = row[0]
         if detail_id is None:
             return (locations, weights)
 
         if facility_cap == 'facility':
-            rows = session.query(PhysiciansLocationBased).where(
+            stmt = select(PhysiciansLocationBased.point, PhysiciansLocationBased.count).where(
                 (PhysiciansLocationBased.detail_id == detail_id) & PhysiciansLocationBased.point.ST_Within(query.wkt)
             )
+            rows = session.execute(stmt).fetchall()
             for row in rows:
-                point = to_shape(row.point)
+                point = to_shape(row[0])
                 locations.append((point.x, point.y))
-                weights.append(row.count)
+                weights.append(row[1])
         elif facility_cap == 'physicianNumber':
-            rows = session.query(PhysiciansCountBased).where(
+            stmt = select(PhysiciansCountBased.point, PhysiciansCountBased.vbe_sum).where(
                 (PhysiciansCountBased.detail_id == detail_id) & PhysiciansCountBased.point.ST_Within(query.wkt)
             )
+            rows = session.execute(stmt).fetchall()
             for row in rows:
-                point = to_shape(row.point)
+                point = to_shape(row[0])
                 locations.append((point.x, point.y))
-                weights.append(row.vbe_sum)
+                weights.append(row[1])
         elif facility_cap == 'employmentVolume':
-            rows = session.query(PhysiciansCountBased).where(
+            stmt = select(PhysiciansCountBased.point, PhysiciansCountBased.pys_count).where(
                 (PhysiciansCountBased.detail_id == detail_id) & PhysiciansCountBased.point.ST_Within(query.wkt)
             )
+            rows = session.execute(stmt).fetchall()
             for row in rows:
-                point = to_shape(row.point)
+                point = to_shape(row[0])
                 locations.append((point.x, point.y))
-                weights.append(row.pys_count)
+                weights.append(row[1])
     
     return (locations, weights)
 

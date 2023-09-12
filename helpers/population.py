@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 import geoalchemy2
 
-from models import engine, Population
+from models import ENGINE, Population
 
 class PopulationAttributes:
     __slots__ = ('index', 'population_count', 'standard_population', 'kita_schul_population')
@@ -200,7 +200,7 @@ def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int]
     locations: list[tuple[float, float]] = []
     utm_locations: list[tuple[float, float]] = []
     weights: list[int] = []
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         population_fields: list[str] = []
         if typ == 'standard':
             fields = ["stnd00_09", "stnd10_19", "stnd20_39", "stnd40_59", "stnd60_79", "stnd80x"]

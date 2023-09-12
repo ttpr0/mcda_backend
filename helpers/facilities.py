@@ -5,7 +5,7 @@ import random
 from shapely import Point, Polygon, STRtree
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from models import engine, Facility as FacilityTable
+from models import ENGINE, Facility as FacilityTable
 
 class Facility:
     points: list[Point]
@@ -58,7 +58,7 @@ def load_facilities(path: str):
 def get_facility(name: str, envelop: Polygon) -> tuple[list[tuple[float, float]], list[float]]:
     locations = []
     weights = []
-    with Session(engine) as session:
+    with Session(ENGINE) as session:
         stmt = select(FacilityTable.wgs_x, FacilityTable.wgs_y, FacilityTable.weight).where((FacilityTable.group==name) & FacilityTable.point.ST_Within(envelop.wkt))
         rows = session.execute(stmt).fetchall()
         for row in rows:

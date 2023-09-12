@@ -5,11 +5,12 @@ from pydantic import BaseModel
 import string
 import random
 import hashlib
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 import config
 
-from models import engine, User
+from models import ENGINE, User
 from state import USER_SESSIONS
 
 
@@ -27,13 +28,14 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 async def login_api(req: LoginRequest):
-    with Session(engine) as session:
-        rows = session.query(User).where(User.email == req.email)
+    with Session(ENGINE) as session:
+        stmt = select(User.password_salt, User.password_hash).where(User.email == req.email)
+        rows = session.execute(stmt).fetchall()
         for row in rows:
-            salt = row.password_salt
+            salt = row[0]
             password_bytes = ''.join([req.password, salt]).encode()
             h = hashlib.sha256(password_bytes).hexdigest()
-            if h != row.password_hash:
+            if h != row[1]:
                 return {
                     "error": "wrong password",
                 }
