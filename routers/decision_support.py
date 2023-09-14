@@ -41,14 +41,14 @@ async def multi_api(req: MultiCriteriaRequest):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    buffer_query = query.buffer(0.05)
+    buffer_query = query.buffer(0.2)
     if req.population_indizes is None or req.population_type is None:
         population_locations, utm_points, population_weights = get_population(query)
     else:
         indizes = convert_population_keys(req.population_type, req.population_indizes)
         if indizes is None:
             return {"error": "invalid population indizes"}
-        population_locations, utm_points, population_weights = get_population(buffer_query, req.population_type, indizes)
+        population_locations, utm_points, population_weights = get_population(query, req.population_type, indizes)
     population_id = await store_population(population_locations, population_weights)
 
     tasks: list[asyncio.Task] = []

@@ -49,7 +49,7 @@ app.include_router(nearest_router, prefix="/v1/accessibility/nearest_query")
 
 app.include_router(spatial_access_router, prefix="/v1/spatial_access")
 
-app.include_router(decision_support_router, prefix="/v1/accessibility/multi")
+app.include_router(decision_support_router, prefix="/v1/decision_support")
 
 app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
 
