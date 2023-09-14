@@ -87,100 +87,99 @@ class PopulationProvider:
 POPULATION: PopulationProvider
 
 def load_population(filename: str):
-    pass
-    # global POPULATION
-    # POPULATION = PopulationProvider()
-    # with open(filename, 'r') as file:
-    #     delimiter = ';'
-    #     line = file.readline()
-    #     tokens = line.split(delimiter)
+    global POPULATION
+    POPULATION = PopulationProvider()
+    with open(filename, 'r') as file:
+        delimiter = ';'
+        line = file.readline()
+        tokens = line.split(delimiter)
 
-    #     # population indices
-    #     index_ew_gesamt = -1
-    #     index_stnd00_09 = -1
-    #     index_stnd10_19 = -1
-    #     index_stnd20_39 = -1
-    #     index_stnd40_59 = -1
-    #     index_stnd60_79 = -1
-    #     index_stnd80x = -1
-    #     index_kisc00_02 = -1
-    #     index_kisc03_05 = -1
-    #     index_kisc06_09 = -1
-    #     index_kisc10_14 = -1
-    #     index_kisc15_17 = -1
-    #     index_kisc18_19 = -1
-    #     index_kisc20x = -1
+        # population indices
+        index_ew_gesamt = -1
+        index_stnd00_09 = -1
+        index_stnd10_19 = -1
+        index_stnd20_39 = -1
+        index_stnd40_59 = -1
+        index_stnd60_79 = -1
+        index_stnd80x = -1
+        index_kisc00_02 = -1
+        index_kisc03_05 = -1
+        index_kisc06_09 = -1
+        index_kisc10_14 = -1
+        index_kisc15_17 = -1
+        index_kisc18_19 = -1
+        index_kisc20x = -1
 
-    #     # geom indices
-    #     index_geom = -1
-    #     index_geom_utm = -1
+        # geom indices
+        index_geom = -1
+        index_geom_utm = -1
 
-    #     for i, token in enumerate(tokens):
-    #         if token == "EW_GESAMT":
-    #             index_ew_gesamt = i
-    #         if token == "GEOM":
-    #             index_geom = i
-    #         if token == "GEOM_UTM":
-    #             index_geom_utm = i
-    #         if token == "STND00_09":
-    #             index_stnd00_09 = i
-    #         if token == "STND10_19":
-    #             index_stnd10_19 = i
-    #         if token == "STND20_39":
-    #             index_stnd20_39 = i
-    #         if token == "STND40_59":
-    #             index_stnd40_59 = i
-    #         if token == "STND60_79":
-    #             index_stnd60_79 = i
-    #         if token == "STND80X":
-    #             index_stnd80x = i
-    #         if token == "KITA_SCHUL":
-    #             index_kisc00_02 = i
-    #         if token == "KITA_SC_01":
-    #             index_kisc03_05 = i
-    #         if token == "KITA_SC_02":
-    #             index_kisc06_09 = i
-    #         if token == "KITA_SC_03":
-    #             index_kisc10_14 = i
-    #         if token == "KITA_SC_04":
-    #             index_kisc15_17 = i
-    #         if token == "KITA_SC_05":
-    #             index_kisc18_19 = i
-    #         if token == "KITA_SC_06":
-    #             index_kisc20x = i
+        for i, token in enumerate(tokens):
+            if token == "EW_GESAMT":
+                index_ew_gesamt = i
+            if token == "GEOM":
+                index_geom = i
+            if token == "GEOM_UTM":
+                index_geom_utm = i
+            if token == "STND00_09":
+                index_stnd00_09 = i
+            if token == "STND10_19":
+                index_stnd10_19 = i
+            if token == "STND20_39":
+                index_stnd20_39 = i
+            if token == "STND40_59":
+                index_stnd40_59 = i
+            if token == "STND60_79":
+                index_stnd60_79 = i
+            if token == "STND80X":
+                index_stnd80x = i
+            if token == "KITA_SCHUL":
+                index_kisc00_02 = i
+            if token == "KITA_SC_01":
+                index_kisc03_05 = i
+            if token == "KITA_SC_02":
+                index_kisc06_09 = i
+            if token == "KITA_SC_03":
+                index_kisc10_14 = i
+            if token == "KITA_SC_04":
+                index_kisc15_17 = i
+            if token == "KITA_SC_05":
+                index_kisc18_19 = i
+            if token == "KITA_SC_06":
+                index_kisc20x = i
         
-    #     while True:
-    #         line = file.readline()
-    #         if not line:
-    #             break
+        while True:
+            line = file.readline()
+            if not line:
+                break
 
-    #         tokens = line.split(delimiter)
-    #         ew_gesamt = int(float(tokens[index_ew_gesamt].replace(",", ".")))
-    #         std_00_09 = int(float(tokens[index_stnd00_09].replace(",", ".")))
-    #         std_10_19 = int(float(tokens[index_stnd10_19].replace(",", ".")))
-    #         std_20_39 = int(float(tokens[index_stnd20_39].replace(",", ".")))
-    #         std_40_59 = int(float(tokens[index_stnd40_59].replace(",", ".")))
-    #         std_60_79 = int(float(tokens[index_stnd60_79].replace(",", ".")))
-    #         std_80x = int(float(tokens[index_stnd80x].replace(",", ".")))
-    #         ksc_00_02 = int(float(tokens[index_kisc00_02].replace(",", ".")))
-    #         ksc_03_05 = int(float(tokens[index_kisc03_05].replace(",", ".")))
-    #         ksc_06_09 = int(float(tokens[index_kisc06_09].replace(",", ".")))
-    #         ksc_10_14 = int(float(tokens[index_kisc10_14].replace(",", ".")))
-    #         ksc_15_17 = int(float(tokens[index_kisc15_17].replace(",", ".")))
-    #         ksc_18_19 = int(float(tokens[index_kisc18_19].replace(",", ".")))
-    #         ksc_20x = int(float(tokens[index_kisc20x].replace(",", ".")))
-    #         standard_population = [std_00_09, std_10_19, std_20_39, std_40_59, std_60_79, std_80x]
-    #         kita_schul_population = [ksc_00_02, ksc_03_05, ksc_06_09, ksc_10_14, ksc_15_17, ksc_18_19, ksc_20x]
+            tokens = line.split(delimiter)
+            ew_gesamt = int(float(tokens[index_ew_gesamt].replace(",", ".")))
+            std_00_09 = int(float(tokens[index_stnd00_09].replace(",", ".")))
+            std_10_19 = int(float(tokens[index_stnd10_19].replace(",", ".")))
+            std_20_39 = int(float(tokens[index_stnd20_39].replace(",", ".")))
+            std_40_59 = int(float(tokens[index_stnd40_59].replace(",", ".")))
+            std_60_79 = int(float(tokens[index_stnd60_79].replace(",", ".")))
+            std_80x = int(float(tokens[index_stnd80x].replace(",", ".")))
+            ksc_00_02 = int(float(tokens[index_kisc00_02].replace(",", ".")))
+            ksc_03_05 = int(float(tokens[index_kisc03_05].replace(",", ".")))
+            ksc_06_09 = int(float(tokens[index_kisc06_09].replace(",", ".")))
+            ksc_10_14 = int(float(tokens[index_kisc10_14].replace(",", ".")))
+            ksc_15_17 = int(float(tokens[index_kisc15_17].replace(",", ".")))
+            ksc_18_19 = int(float(tokens[index_kisc18_19].replace(",", ".")))
+            ksc_20x = int(float(tokens[index_kisc20x].replace(",", ".")))
+            standard_population = [std_00_09, std_10_19, std_20_39, std_40_59, std_60_79, std_80x]
+            kita_schul_population = [ksc_00_02, ksc_03_05, ksc_06_09, ksc_10_14, ksc_15_17, ksc_18_19, ksc_20x]
 
-    #         point: Point = from_wkb(bytes.fromhex(tokens[index_geom]))
-    #         utm_point: Point = from_wkb(bytes.fromhex(tokens[index_geom_utm]))
-    #         attributes: PopulationPoint = PopulationPoint(point, utm_point, ew_gesamt, standard_population, kita_schul_population)
-    #         POPULATION.addPopulationPoint(attributes)
-    #     POPULATION.generateIndex()
+            point: Point = from_wkb(bytes.fromhex(tokens[index_geom]))
+            utm_point: Point = from_wkb(bytes.fromhex(tokens[index_geom_utm]))
+            attributes: PopulationPoint = PopulationPoint(point, utm_point, ew_gesamt, standard_population, kita_schul_population)
+            POPULATION.addPopulationPoint(attributes)
+        POPULATION.generateIndex()
 
-# def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int] = []) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[int]]:
-#     global POPULATION
-#     return POPULATION.getPopulationInEnvelope(query, typ, indizes)
+def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int] = []) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[int]]:
+    global POPULATION
+    return POPULATION.getPopulationInEnvelope(query, typ, indizes)
 
 def convert_population_keys(typ: str, keys: list[str]) -> list[int]|None:
     indizes = []
@@ -222,33 +221,33 @@ def convert_population_keys(typ: str, keys: list[str]) -> list[int]|None:
                     return None
     return indizes
 
-def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int] = []) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[int]]:
-    locations: list[tuple[float, float]] = []
-    utm_locations: list[tuple[float, float]] = []
-    weights: list[int] = []
-    with Session(ENGINE) as session:
-        population_fields: list[str] = []
-        if typ == 'standard':
-            fields = ["std_00_09", "std_10_19", "std_20_39", "std_40_59", "std_60_79", "std_80x"]
-            for index in indizes:
-                population_fields.append(fields[index])
-        elif typ == 'kita_schul':
-            fields = ["ksc_00_02", "ksc_03_05", "ksc_06_09", "ksc_10_14", "ksc_15_17", "ksc_18_19", "ksc_20x"]
-            for index in indizes:
-                population_fields.append(fields[index])
-        else:
-            population_fields.append("ew_gesamt")
-        stmt = select(Population.wgs_x, Population.wgs_y, Population.utm_x, Population.utm_y, *[getattr(Population, field) for field in population_fields]).where(Population.point.ST_Within(query.wkt))
-        rows = session.execute(stmt).fetchall()
-        for row in rows:
-            wgs_x: float = row[0]
-            wgs_y: float = row[1]
-            utm_x: float = row[2]
-            utm_y: float = row[3]
-            locations.append((wgs_x, wgs_y))
-            utm_locations.append((utm_x, utm_y))
-            weight = 0
-            for val in row[4:]:
-                weight += val
-            weights.append(weight)
-    return locations, utm_locations, weights
+# def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int] = []) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[int]]:
+#     locations: list[tuple[float, float]] = []
+#     utm_locations: list[tuple[float, float]] = []
+#     weights: list[int] = []
+#     with Session(ENGINE) as session:
+#         population_fields: list[str] = []
+#         if typ == 'standard':
+#             fields = ["std_00_09", "std_10_19", "std_20_39", "std_40_59", "std_60_79", "std_80x"]
+#             for index in indizes:
+#                 population_fields.append(fields[index])
+#         elif typ == 'kita_schul':
+#             fields = ["ksc_00_02", "ksc_03_05", "ksc_06_09", "ksc_10_14", "ksc_15_17", "ksc_18_19", "ksc_20x"]
+#             for index in indizes:
+#                 population_fields.append(fields[index])
+#         else:
+#             population_fields.append("ew_gesamt")
+#         stmt = select(Population.wgs_x, Population.wgs_y, Population.utm_x, Population.utm_y, *[getattr(Population, field) for field in population_fields]).where(Population.point.ST_Within(query.wkt))
+#         rows = session.execute(stmt).fetchall()
+#         for row in rows:
+#             wgs_x: float = row[0]
+#             wgs_y: float = row[1]
+#             utm_x: float = row[2]
+#             utm_y: float = row[3]
+#             locations.append((wgs_x, wgs_y))
+#             utm_locations.append((utm_x, utm_y))
+#             weight = 0
+#             for val in row[4:]:
+#                 weight += val
+#             weights.append(weight)
+#     return locations, utm_locations, weights
