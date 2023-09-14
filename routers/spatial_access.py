@@ -80,11 +80,18 @@ async def spatial_access_api(req: SpatialAccessRequest):
 
     features: list = []
     values = []
+    min_val = 1000000000
+    max_val = -1000000000
     for i, p in enumerate(utm_points):
         point = points[i]
         if not contains_xy(query, point[0], point[1]):
             continue
         access: float = float(accessibilities[i])
+        if not access == -9999: 
+            if access < min_val:
+                min_val = access
+            if access > max_val:
+                max_val = access
         features.append(GridFeature(p[0], p[1], {
             "accessibility": access
         }))
@@ -92,7 +99,7 @@ async def spatial_access_api(req: SpatialAccessRequest):
 
     # layer_name = build_geoserver_grid(values, extend)
 
-    return {"features": features, "crs": crs, "extend": extend, "size": size, "min": 0, "max": 100}
+    return {"features": features, "crs": crs, "extend": extend, "size": size, "min": min_val, "max": max_val}
 
 @router.post("/grid2")
 async def spatial_access_api2(req: SpatialAccessRequest):
@@ -128,11 +135,18 @@ async def spatial_access_api2(req: SpatialAccessRequest):
     accessibilities = await task
 
     features: list = []
+    min_val = 1000000000
+    max_val = -1000000000
     for i, p in enumerate(utm_points):
         point = points[i]
         if not contains_xy(query, point[0], point[1]):
             continue
         access: float = float(accessibilities[i])
+        if not access == -9999: 
+            if access < min_val:
+                min_val = access
+            if access > max_val:
+                max_val = access
         features.append({
             "x": p[0],
             "y": p[1],
@@ -143,4 +157,4 @@ async def spatial_access_api2(req: SpatialAccessRequest):
 
     layer_id = build_remote_grid(features, extend)
 
-    return {"url": "http://localhost:5004", "id": layer_id, "crs": crs, "extend": extend, "min": 0, "max": 100}
+    return {"url": "http://localhost:5004", "id": layer_id, "crs": crs, "extend": extend, "min": min_val, "max": max_val}
