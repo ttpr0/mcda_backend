@@ -1,11 +1,15 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
 from sqlalchemy import create_engine, Engine, MetaData
+from sqlalchemy.event import listen
 from sqlalchemy.orm import declarative_base
+from geoalchemy2 import load_spatialite_gpkg
 
 import config
 
 ENGINE: Engine = create_engine(f"postgresql+psycopg2://{config.POSTGIS_USER}:{config.POSTGIS_PASSWORD}@{config.POSTGIS_HOST}:5432/{config.POSTGIS_DB}")
+# ENGINE: Engine = create_engine('gpkg:///./files/backend_data.gpkg')
+# listen(ENGINE, "connect", load_spatialite_gpkg)
 
 META_DATA: MetaData = MetaData()
 META_DATA.reflect(bind=ENGINE)

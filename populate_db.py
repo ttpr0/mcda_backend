@@ -41,7 +41,7 @@ def insertPlanningAreas() -> None:
             with open(config.PLANNING_AREAS_DIR + "/" + file, "r") as file:
                 data = json.loads(file.read())
                 for feature in data["features"]:
-                    name = feature["attributes"]["HPB"]
+                    name = feature["attributes"]["HPB"].lower()
                     rings = feature["geometry"]["rings"]
                     polygon = Polygon(rings[0], rings[1:])
                     session.add(PlanningArea(name, polygon))
@@ -74,9 +74,10 @@ def insertPhysicians() -> None:
 
 def insertSupplyLevels() -> None:
     supply_levels = [
-        ('Allgemeine Ärzte', 100),
-        ('Spezialisten', 200),
-        ('spezielle Spezialisten', 300)
+        ('generalPhysician', 100),
+        ('generalSpecialist', 200),
+        ('specializedSpecialist', 300),
+        ('lowerSaxony', 400)
     ]
     with Session(ENGINE) as session:
         session.query(SupplyLevelList).delete()
@@ -87,20 +88,20 @@ def insertSupplyLevels() -> None:
 
 def insertPhysiciansList() -> None:
     physicians = [
-        ("Hausärzte", 100, 100),
-        ("Augenärzte", 200, 205),
-        ("Chirurgen und Orthopäden", 200, 212),
-        ("Frauenärzte", 200, 235),
-        ("Hautärzte", 200, 225),
-        ("HNO-Ärzte", 200, 220),
-        ("Kinderärzte", 200, 245),
-        ("Nervenärzte", 200, 230),
-        ("Psychotherapeuten", 200, 250),
-        ("Urologen", 200, 240),
-        ("fachärztlich tätige Internisten", 300, 302),
-        ("Kinder- und Jugendpsychiater", 300, 303),
-        ("Radiologen", 300, 304),
-        ("Anästhesisten", 300, 301)
+        ("general_physician", 100, 100),
+        ("augenarzte", 200, 205),
+        ("surgeon", 200, 212),
+        ("frauenarzte", 200, 235),
+        ("dermatologist", 200, 225),
+        ("hno_arzte", 200, 220),
+        ("paediatrician", 200, 245),
+        ("neurologist", 200, 230),
+        ("psychotherapist", 200, 250),
+        ("urologist", 200, 240),
+        ("internisten", 300, 302),
+        ("jugendpsychiater", 300, 303),
+        ("radiologen", 300, 304),
+        ("anasthesisten", 300, 301)
     ]
     with Session(ENGINE) as session:
         session.query(PhysiciansList).delete()
@@ -189,19 +190,19 @@ def insertPopulation() -> None:
                     "utm_y": utm_point.y,
                 }
                 attr["ew_gesamt"] = int(float(tokens[index_ew_gesamt].replace(",", ".")))
-                attr["stnd00_09"] = int(float(tokens[index_stnd00_09].replace(",", ".")))
-                attr["stnd10_19"] = int(float(tokens[index_stnd10_19].replace(",", ".")))
-                attr["stnd20_39"] = int(float(tokens[index_stnd20_39].replace(",", ".")))
-                attr["stnd40_59"] = int(float(tokens[index_stnd40_59].replace(",", ".")))
-                attr["stnd60_79"] = int(float(tokens[index_stnd60_79].replace(",", ".")))
-                attr["stnd80x"] = int(float(tokens[index_stnd80x].replace(",", ".")))
-                attr["kisc00_02"] = int(float(tokens[index_kisc00_02].replace(",", ".")))
-                attr["kisc03_05"] = int(float(tokens[index_kisc03_05].replace(",", ".")))
-                attr["kisc06_09"] = int(float(tokens[index_kisc06_09].replace(",", ".")))
-                attr["kisc10_14"] = int(float(tokens[index_kisc10_14].replace(",", ".")))
-                attr["kisc15_17"] = int(float(tokens[index_kisc15_17].replace(",", ".")))
-                attr["kisc18_19"] = int(float(tokens[index_kisc18_19].replace(",", ".")))
-                attr["kisc20x"] = int(float(tokens[index_kisc20x].replace(",", ".")))
+                attr["std_00_09"] = int(float(tokens[index_stnd00_09].replace(",", ".")))
+                attr["std_10_19"] = int(float(tokens[index_stnd10_19].replace(",", ".")))
+                attr["std_20_39"] = int(float(tokens[index_stnd20_39].replace(",", ".")))
+                attr["std_40_59"] = int(float(tokens[index_stnd40_59].replace(",", ".")))
+                attr["std_60_79"] = int(float(tokens[index_stnd60_79].replace(",", ".")))
+                attr["std_80x"] = int(float(tokens[index_stnd80x].replace(",", ".")))
+                attr["ksc_00_02"] = int(float(tokens[index_kisc00_02].replace(",", ".")))
+                attr["ksc_03_05"] = int(float(tokens[index_kisc03_05].replace(",", ".")))
+                attr["ksc_06_09"] = int(float(tokens[index_kisc06_09].replace(",", ".")))
+                attr["ksc_10_14"] = int(float(tokens[index_kisc10_14].replace(",", ".")))
+                attr["ksc_15_17"] = int(float(tokens[index_kisc15_17].replace(",", ".")))
+                attr["ksc_18_19"] = int(float(tokens[index_kisc18_19].replace(",", ".")))
+                attr["ksc_20x"] = int(float(tokens[index_kisc20x].replace(",", ".")))
 
                 session.add(Population(**attr))
         session.commit()

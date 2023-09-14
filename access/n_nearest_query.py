@@ -11,7 +11,7 @@ import base64
 import config
 
 
-async def calcNearestQuery(population_locations: list[tuple[float, float]], population_weights: list[int], envelop: tuple[float, float, float, float], facilities: list[tuple[float, float]], facility_weights: list[float], ranges: list[float]) -> np.ndarray:
+async def calcNearestQuery(population_locations: list[tuple[float, float]], population_weights: list[int], envelop: tuple[float, float, float, float], facilities: list[tuple[float, float]], facility_weights: list[float], ranges: list[float]) -> list[float]:
     header = {'Content-Type': 'application/json'}
     body = {
         "demand": {
@@ -30,7 +30,7 @@ async def calcNearestQuery(population_locations: list[tuple[float, float]], popu
     loop = asyncio.get_running_loop()
     response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/queries/n_nearest", json=body, headers=header))
     accessibilities = response.json()
-    arr: np.ndarray = np.array(accessibilities["result"])
+    arr: list[float] = accessibilities["result"]
     return arr
 
 

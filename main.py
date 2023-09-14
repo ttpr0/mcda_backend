@@ -8,13 +8,13 @@ import asyncio
 
 import config
 from helpers.population import load_population
-from helpers.facilities import load_facilities
 from routers.nearest_query import router as nearest_router
 from routers.spatial_access import router as spatial_access_router
 from routers.spatial_analysis import router as spatial_analysis_router
 from routers.login import router as login_router
 from routers.app_state import router as app_state_router
 from routers.others import router as others_router
+from routers.decision_support import router as decision_support_router
 from state import USER_SESSIONS
 
 app = FastAPI()
@@ -48,6 +48,8 @@ app.add_middleware(
 app.include_router(nearest_router, prefix="/v1/accessibility/nearest_query")
 
 app.include_router(spatial_access_router, prefix="/v1/spatial_access")
+
+app.include_router(decision_support_router, prefix="/v1/accessibility/multi")
 
 app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
 
@@ -94,8 +96,7 @@ if __name__ == '__main__':
 
     logger.info("Start loading population data...")
     load_population(config.POPULATION_FILE)
-    logger.info("Start loading facility data...")
-    load_facilities(config.FACILITY_DIR)
     logger.info("Done loading population data.")
     logger.info("AccessibilityService ready!")
-    uvicorn.run(app, host=config.API_HOST, port=config.API_PORT)
+    # uvicorn.run("main:app", host=config.API_HOST, port=config.API_PORT, reload=True)
+    uvicorn.run("main:app", host=config.API_HOST, port=config.API_PORT)

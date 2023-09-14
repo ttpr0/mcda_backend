@@ -11,7 +11,7 @@ import base64
 import config
 
 
-async def calcAggregateQuery(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], max_range: float, compute_type: str) -> np.ndarray:
+async def calcAggregateQuery(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], max_range: float, compute_type: str) -> list[float]:
     header = {'Content-Type': 'application/json'}
     body = {
         "demand": {
@@ -28,5 +28,5 @@ async def calcAggregateQuery(population_locations: list[tuple[float, float]], po
     loop = asyncio.get_running_loop()
     response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/queries/aggregate", json=body, headers=header))
     accessibilities = response.json()
-    arr: np.ndarray = np.array(accessibilities["result"])
+    arr: list[float] = accessibilities["result"]
     return arr

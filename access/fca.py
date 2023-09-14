@@ -10,7 +10,7 @@ import numpy as np
 import config
 
 
-async def calcFCA(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], range_factors: list[float], mode: str = "isochrones", travel_mode: str = "driving-car") -> np.ndarray:
+async def calcFCA(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], range_factors: list[float], mode: str = "isochrones", travel_mode: str = "driving-car") -> list[float]:
     header = {'Content-Type': 'application/json'}
     body = {
         "supply": {
@@ -41,11 +41,11 @@ async def calcFCA(population_locations: list[tuple[float, float]], population_we
     t2 = time.time()
     print(f"time: {t2-t1}")
     accessibilities = response.json()
-    arr: np.ndarray = np.array(accessibilities["access"])
+    arr: list[float] = accessibilities["access"]
     return arr
 
 
-async def calcFCA2(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], max_range: float) -> np.ndarray:
+async def calcFCA2(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], max_range: float) -> list[float]:
     header = {'Content-Type': 'application/json'}
     body = {
         "facility_locations": facility_locations,
@@ -61,5 +61,5 @@ async def calcFCA2(population_locations: list[tuple[float, float]], population_w
     t2 = time.time()
     print(f"time: {t2-t1}")
     accessibilities = response.json()
-    arr: np.ndarray = np.array(accessibilities["access"])
+    arr: list[float] = accessibilities["access"]
     return arr

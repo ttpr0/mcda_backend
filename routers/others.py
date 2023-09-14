@@ -7,19 +7,19 @@ import asyncio
 from shapely import Polygon
 from typing import Any
 import numpy as np
+import json
+import requests
 
 import config
 from helpers.population import get_population
 from helpers.facilities import get_facility
 from helpers.util import get_extent
-from .responses import GridFeature, GridResponse
+from helpers.responses import GridFeature, build_remote_grid
 
 from access.fca import calcFCA, calcFCA2
 from access.n_nearest_query import calcNearestQuery
 from access.aggregate_query import calcAggregateQuery
 from access.gravity import calcGravity
-from access.multi_criteria import calcMultiCriteria, calcMultiCriteria2, InfrastructureParams
-from access.oas_population import store_population, request_population
 
 router = APIRouter()
 
@@ -93,6 +93,39 @@ async def fca_api2(req: FCARequest):
     crs = "EPSG:25832"
 
     return {"features": features, "crs": crs, "extend": extend, "size": size}
+
+@router.post("/fca3/grid")
+async def fca_api3(req: FCARequest):
+    ll = (req.envelop[0], req.envelop[1])
+    ur = (req.envelop[2], req.envelop[3])
+    query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
+    points, utm_points, weights = get_population(query)
+
+    facility_weights = np.random.randint(1, 100, size=(len(req.facility_locations),)).tolist()
+
+    task = asyncio.create_task(calcFCA(
+        points, weights, req.facility_locations, facility_weights, req.ranges, req.range_factors, req.mode))
+
+    minx, miny, maxx, maxy = get_extent(utm_points)
+    extend = (minx-50, miny-50, maxx+50, maxy+50)
+    crs = "EPSG:25832"
+
+    accessibilities = await task
+
+    features: list = []
+    for i, p in enumerate(utm_points):
+        access: float = accessibilities[i]
+        features.append({
+            "x": p[0],
+            "y": p[1],
+            "values": {
+                "accessibility": access
+            }
+        })
+
+    layer_id = build_remote_grid(features, extend)
+
+    return {"url": "http://localhost:5004", "id": layer_id, "crs": crs, "extend": extend}
 
 
 class NearestQueryRequest(BaseModel):
@@ -253,82 +286,3 @@ async def gravity2_api(req: Gravity2Request):
 
     return {"features": features, "crs": crs, "extend": extend, "size": size}
 
-
-class MultiCriteriaRequest(BaseModel):
-    infrastructures: dict[str, InfrastructureParams]
-    envelop: tuple[float, float, float, float]
-    population_type: str | None
-    population_indizes: list[int] | None
-
-@router.post("/accessibility/multi/grid")
-async def multi_api(req: MultiCriteriaRequest):
-    ll = (req.envelop[0], req.envelop[1])
-    ur = (req.envelop[2], req.envelop[3])
-    query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    if req.population_indizes is None or req.population_type is None:
-        population_locations, utm_points, population_weights = get_population(query)
-    else:
-        population_locations, utm_points, population_weights = get_population(query, req.population_type, req.population_indizes)
-    population_id = await store_population(population_locations, population_weights)
-
-    task = asyncio.create_task(calcMultiCriteria(population_id, req.infrastructures))
-
-    features: list[GridFeature] = []
-    minx, miny, maxx, maxy = get_extent(utm_points)
-
-    for p in utm_points:
-        features.append(GridFeature(p[0], p[1], {}))
-
-    accessibilities = await task
-    for name, array in accessibilities.items():
-        for i, _ in enumerate(utm_points):
-            feature = features[i]
-            access: float = float(array[i])
-            feature.value[name] = access
-            if population_weights[i] == 0:
-                feature.value[name + "_weighted"] = -9999
-            else:
-                feature.value[name + "_weighted"] = access / population_weights[i]
-
-    extend = [minx-50, miny-50, maxx+50, maxy+50]
-    dx = extend[2] - extend[0]
-    dy = extend[3] - extend[1]
-    size = [int(dx/100), int(dy/100)]
-
-    crs = "EPSG:25832"
-
-    return {"features": features, "crs": crs, "extend": extend, "size": size}
-
-@router.post("/accessibility/multi/grid2")
-async def multi_api2(req: MultiCriteriaRequest):
-    ll = (req.envelop[0], req.envelop[1])
-    ur = (req.envelop[2], req.envelop[3])
-    query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    if req.population_indizes is None or req.population_type is None:
-        population_locations, utm_points, population_weights = get_population(query)
-    else:
-        population_locations, utm_points, population_weights = get_population(query, req.population_type, req.population_indizes)
-    population_id = await store_population(population_locations, population_weights)
-
-    task = asyncio.create_task(calcMultiCriteria2(population_locations, population_weights, req.infrastructures))
-
-    features: list[GridFeature] = []
-    minx, miny, maxx, maxy = get_extent(utm_points)
-
-    for p in utm_points:
-        features.append(GridFeature(p[0], p[1], {}))
-
-    accessibilities = await task
-    for i, _ in enumerate(utm_points):
-        feature = features[i]
-        access = accessibilities[i]
-        feature.value = access
-
-    extend = [minx-50, miny-50, maxx+50, maxy+50]
-    dx = extend[2] - extend[0]
-    dy = extend[3] - extend[1]
-    size = [int(dx/100), int(dy/100)]
-
-    crs = "EPSG:25832"
-
-    return {"features": features, "crs": crs, "extend": extend, "size": size}

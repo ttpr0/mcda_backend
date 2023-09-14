@@ -15,7 +15,7 @@ import config
 from helpers.population import get_population
 from helpers.facilities import get_facility
 from helpers.util import get_extent
-from routers.responses import GridFeature, GridResponse
+from helpers.responses import GridFeature
 from access.aggregate_query import calcAggregateQuery
 from access.gravity import calcGravity
 

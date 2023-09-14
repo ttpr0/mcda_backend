@@ -4,12 +4,11 @@ from shapely import Point, Polygon
 import requests
 import json
 import asyncio
-import numpy as np
 
 import config
 
 
-async def calcGravity(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], range_factors: list[float]) -> list[float]:
+async def calcReachability(population_id: str, facility_locations: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], range_factors: list[float]) -> list[float]:
     header = {'Content-Type': 'application/json'}
     body = {
         "supply": {
@@ -17,8 +16,7 @@ async def calcGravity(population_locations: list[tuple[float, float]], populatio
             "supply_weights": facility_weights,
         },
         "demand": {
-            "demand_locations": population_locations,
-            "demand_weights": population_weights,
+            "demand_id": population_id,
         },
         "distance_decay": {
             "decay_type": "hybrid",

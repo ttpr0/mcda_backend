@@ -7,15 +7,17 @@ import geoalchemy2
 
 from models import ENGINE, Population
 
-class PopulationAttributes:
-    __slots__ = ('index', 'population_count', 'standard_population', 'kita_schul_population')
-    index: int
+class PopulationPoint:
+    __slots__ = ('index', 'point', 'utm_point', 'population_count', 'standard_population', 'kita_schul_population')
+    point: Point
+    utm_point: Point
     population_count: int
     standard_population: list[int]
     kita_schul_population: list[int]
 
-    def __init__(self, count: int, standard: list[int], kita_schul: list[int]):
-        self.index = 0
+    def __init__(self, point: Point, utm_point: Point, count: int, standard: list[int], kita_schul: list[int]):
+        self.point = point
+        self.utm_point = utm_point
         self.population_count = count
         self.standard_population = standard
         self.kita_schul_population = kita_schul
@@ -25,43 +27,25 @@ class PopulationAttributes:
 
     def getStandardPopulation(self, indizes: list[int]) -> int:
         count = 0
-        for i in range(len(indizes)):
-            count += self.standard_population[indizes[i]]
+        for key in indizes:
+            count += self.standard_population[key]
         return count
 
     def getKitaSchulPopulation(self, indizes: list[int]) -> int:
         count = 0
-        for i in range(len(indizes)):
-            count += self.kita_schul_population[indizes[i]]
+        for key in indizes:
+            count += self.kita_schul_population[key]
         return count
-
-
-class PopulationPoint:
-    __slots__ = ('point', 'utm_point', 'attributes', 'weight')
-    point: Point
-    utm_point: Point
-    attributes: PopulationAttributes
-    weight: int
-
-    def __init__(self, point: Point, utm_point: Point, attributes: PopulationAttributes):
-        self.point = point
-        self.utm_point = utm_point
-        self.attributes = attributes
-        self.weight = 0
 
 class PopulationProvider:
     def __init__(self):
         self.p_points: list[PopulationPoint] = []
         self.points: list[Point] = []
-        self.attributes: list[PopulationAttributes] = []
         self.index: STRtree | None = None
 
-    def addPopulationPoint(self, point: Point, utm_point: Point, attributes: PopulationAttributes):
-        index: int = len(self.points)
-        attributes.index = index
-        self.points.append(point)
-        self.attributes.append(attributes)
-        self.p_points.append(PopulationPoint(point, utm_point, attributes))
+    def addPopulationPoint(self, point: PopulationPoint):
+        self.points.append(point.point)
+        self.p_points.append(point)
 
     def getPoint(self, index: int) -> PopulationPoint:
         return self.p_points[index]
@@ -87,11 +71,11 @@ class PopulationProvider:
             p_point: PopulationPoint = self.p_points[idx]
             weight: int
             if typ == 'standard':
-                weight = p_point.attributes.getStandardPopulation(indizes)
+                weight = p_point.getStandardPopulation(indizes)
             elif typ == 'kita_schul':
-                weight = p_point.attributes.getKitaSchulPopulation(indizes)
+                weight = p_point.getKitaSchulPopulation(indizes)
             else:
-                weight = p_point.attributes.getPopulationCount()
+                weight = p_point.getPopulationCount()
             if weight <= 0:
                 continue
             locations.append((p_point.point.x, p_point.point.y))
@@ -104,6 +88,8 @@ POPULATION: PopulationProvider
 
 def load_population(filename: str):
     pass
+    # global POPULATION
+    # POPULATION = PopulationProvider()
     # with open(filename, 'r') as file:
     #     delimiter = ';'
     #     line = file.readline()
@@ -163,7 +149,6 @@ def load_population(filename: str):
     #         if token == "KITA_SC_06":
     #             index_kisc20x = i
         
-    #     POPULATION = PopulationProvider()
     #     while True:
     #         line = file.readline()
     #         if not line:
@@ -171,30 +156,71 @@ def load_population(filename: str):
 
     #         tokens = line.split(delimiter)
     #         ew_gesamt = int(float(tokens[index_ew_gesamt].replace(",", ".")))
-    #         stnd00_09 = int(float(tokens[index_stnd00_09].replace(",", ".")))
-    #         stnd10_19 = int(float(tokens[index_stnd10_19].replace(",", ".")))
-    #         stnd20_39 = int(float(tokens[index_stnd20_39].replace(",", ".")))
-    #         stnd40_59 = int(float(tokens[index_stnd40_59].replace(",", ".")))
-    #         stnd60_79 = int(float(tokens[index_stnd60_79].replace(",", ".")))
-    #         stnd80x = int(float(tokens[index_stnd80x].replace(",", ".")))
-    #         kisc00_02 = int(float(tokens[index_kisc00_02].replace(",", ".")))
-    #         kisc03_05 = int(float(tokens[index_kisc03_05].replace(",", ".")))
-    #         kisc06_09 = int(float(tokens[index_kisc06_09].replace(",", ".")))
-    #         kisc10_14 = int(float(tokens[index_kisc10_14].replace(",", ".")))
-    #         kisc15_17 = int(float(tokens[index_kisc15_17].replace(",", ".")))
-    #         kisc18_19 = int(float(tokens[index_kisc18_19].replace(",", ".")))
-    #         kisc20x = int(float(tokens[index_kisc20x].replace(",", ".")))
-    #         standard_population = [stnd00_09, stnd10_19, stnd20_39, int(stnd40_59 / 2), int(stnd40_59 / 2), stnd60_79, stnd80x]
-    #         kita_schul_population = [kisc00_02, kisc03_05, kisc06_09, kisc10_14, kisc15_17, kisc18_19, kisc20x]
+    #         std_00_09 = int(float(tokens[index_stnd00_09].replace(",", ".")))
+    #         std_10_19 = int(float(tokens[index_stnd10_19].replace(",", ".")))
+    #         std_20_39 = int(float(tokens[index_stnd20_39].replace(",", ".")))
+    #         std_40_59 = int(float(tokens[index_stnd40_59].replace(",", ".")))
+    #         std_60_79 = int(float(tokens[index_stnd60_79].replace(",", ".")))
+    #         std_80x = int(float(tokens[index_stnd80x].replace(",", ".")))
+    #         ksc_00_02 = int(float(tokens[index_kisc00_02].replace(",", ".")))
+    #         ksc_03_05 = int(float(tokens[index_kisc03_05].replace(",", ".")))
+    #         ksc_06_09 = int(float(tokens[index_kisc06_09].replace(",", ".")))
+    #         ksc_10_14 = int(float(tokens[index_kisc10_14].replace(",", ".")))
+    #         ksc_15_17 = int(float(tokens[index_kisc15_17].replace(",", ".")))
+    #         ksc_18_19 = int(float(tokens[index_kisc18_19].replace(",", ".")))
+    #         ksc_20x = int(float(tokens[index_kisc20x].replace(",", ".")))
+    #         standard_population = [std_00_09, std_10_19, std_20_39, std_40_59, std_60_79, std_80x]
+    #         kita_schul_population = [ksc_00_02, ksc_03_05, ksc_06_09, ksc_10_14, ksc_15_17, ksc_18_19, ksc_20x]
 
-    #         attributes: PopulationAttributes = PopulationAttributes(ew_gesamt, standard_population, kita_schul_population)
     #         point: Point = from_wkb(bytes.fromhex(tokens[index_geom]))
     #         utm_point: Point = from_wkb(bytes.fromhex(tokens[index_geom_utm]))
-    #         POPULATION.addPopulationPoint(point, utm_point, attributes)
+    #         attributes: PopulationPoint = PopulationPoint(point, utm_point, ew_gesamt, standard_population, kita_schul_population)
+    #         POPULATION.addPopulationPoint(attributes)
     #     POPULATION.generateIndex()
 
 # def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int] = []) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[int]]:
+#     global POPULATION
 #     return POPULATION.getPopulationInEnvelope(query, typ, indizes)
+
+def convert_population_keys(typ: str, keys: list[str]) -> list[int]|None:
+    indizes = []
+    if typ == "standard":
+        for key in keys:
+            match key:
+                case "std_00_09":
+                    indizes.append(0)
+                case "std_10_19":
+                    indizes.append(1)
+                case "std_20_39":
+                    indizes.append(2)
+                case "std_40_59":
+                    indizes.append(3)
+                case "std_60_79":
+                    indizes.append(4)
+                case "std_80x":
+                    indizes.append(5)
+                case _:
+                    return None
+    elif typ == "kita_schul":
+        for key in keys:
+            match key:
+                case "ksc_00_02":
+                    indizes.append(0)
+                case "ksc_03_05":
+                    indizes.append(1)
+                case "ksc_06_09":
+                    indizes.append(2)
+                case "ksc_10_14":
+                    indizes.append(3)
+                case "ksc_15_17":
+                    indizes.append(4)
+                case "ksc_18_19":
+                    indizes.append(5)
+                case "ksc_20x":
+                    indizes.append(6)
+                case _:
+                    return None
+    return indizes
 
 def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int] = []) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[int]]:
     locations: list[tuple[float, float]] = []
@@ -203,11 +229,11 @@ def get_population(query: Polygon, typ: str = 'standard_all', indizes: list[int]
     with Session(ENGINE) as session:
         population_fields: list[str] = []
         if typ == 'standard':
-            fields = ["stnd00_09", "stnd10_19", "stnd20_39", "stnd40_59", "stnd60_79", "stnd80x"]
+            fields = ["std_00_09", "std_10_19", "std_20_39", "std_40_59", "std_60_79", "std_80x"]
             for index in indizes:
                 population_fields.append(fields[index])
         elif typ == 'kita_schul':
-            fields = ["kisc00_02", "kisc03_05", "kisc06_09", "kisc10_14", "kisc15_17", "kisc18_19", "kisc20x"]
+            fields = ["ksc_00_02", "ksc_03_05", "ksc_06_09", "ksc_10_14", "ksc_15_17", "ksc_18_19", "ksc_20x"]
             for index in indizes:
                 population_fields.append(fields[index])
         else:
