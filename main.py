@@ -7,7 +7,7 @@ import logging
 import asyncio
 
 import config
-from helpers.population import load_population
+from models.population import load_population
 from routers.nearest_query import router as nearest_router
 from routers.spatial_access import router as spatial_access_router
 from routers.spatial_analysis import router as spatial_analysis_router

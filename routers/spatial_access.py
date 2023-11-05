@@ -17,9 +17,9 @@ from geoalchemy2.shape import to_shape
 import config
 
 from access.fca import calcFCA
-from helpers.population import get_population, convert_population_keys
-from helpers.facilities import get_facility
-from helpers.physicians import get_planning_area, get_physicians
+from models.population import get_population, convert_population_keys
+from models.facilities import get_facility
+from models.physicians import get_planning_area, get_physicians
 from helpers.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
 from helpers.util import get_extent
 from helpers.responses import build_remote_grid, build_geoserver_grid, GridFeature

@@ -12,8 +12,8 @@ import os
 import numpy as np
 
 import config
-from helpers.population import get_population
-from helpers.facilities import get_facility
+from models.population import get_population
+from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
 from access.aggregate_query import calcAggregateQuery

@@ -11,8 +11,8 @@ import random
 import uuid
 
 import config
-from helpers.population import get_population, PopulationPoint
-from helpers.facilities import get_facility
+from models.population import get_population
+from models.facilities import get_facility
 from helpers.util import get_extent
 from access.n_nearest_query import calcNearestQuery, calcNearestQuery2, calcNearestQuery3
 

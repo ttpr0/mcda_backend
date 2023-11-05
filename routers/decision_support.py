@@ -9,8 +9,8 @@ import numpy as np
 
 import config
 
-from helpers.population import get_population, convert_population_keys
-from helpers.facilities import get_facility
+from models.population import get_population, convert_population_keys
+from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
 from access.multi_criteria import calcMultiCriteria, calcMultiCriteria2

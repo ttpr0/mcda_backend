@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 import config
 
-from models import ENGINE, User
+from models import ENGINE, get_table
 from state import USER_SESSIONS
 
 
@@ -29,7 +29,12 @@ class LoginRequest(BaseModel):
 @router.post("/login")
 async def login_api(req: LoginRequest):
     with Session(ENGINE) as session:
-        stmt = select(User.password_salt, User.password_hash).where(User.email == req.email)
+        user_table = get_table("users")
+        if user_table is None:
+            return {
+                "error": "internal server error",
+            }
+        stmt = select(user_table.c.password_salt, user_table.c.password_hash).where(user_table.c.email == req.email)
         rows = session.execute(stmt).fetchall()
         for row in rows:
             salt = row[0]
