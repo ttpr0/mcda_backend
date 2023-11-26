@@ -26,7 +26,7 @@ def get_physicians(query: Polygon, supply_level: str, facility_type: str, facili
         phys_list = get_table("physicians_list")
         if phys_list is None:
             return (locations, weights)
-        stmt = select(phys_list.c.detail_id).where(phys_list.c.name == facility_type)
+        stmt = select(phys_list.c.DETAIL_ID).where(phys_list.c.name == facility_type)
         rows = session.execute(stmt).fetchall()
         detail_id = None
         for row in rows:
@@ -39,7 +39,7 @@ def get_physicians(query: Polygon, supply_level: str, facility_type: str, facili
             if phys_loc_based is None:
                 return (locations, weights)
             stmt = select(phys_loc_based.c.point, phys_loc_based.c.count).where(
-                (phys_loc_based.c.detail_id == detail_id) & phys_loc_based.c.point.ST_Within(query.wkt)
+                (phys_loc_based.c.DETAIL_ID == detail_id) & phys_loc_based.c.point.ST_Within(query.wkt)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
@@ -50,8 +50,8 @@ def get_physicians(query: Polygon, supply_level: str, facility_type: str, facili
             phys_count_based = get_table("physicians_count_based")
             if phys_count_based is None:
                 return (locations, weights)
-            stmt = select(phys_count_based.c.point, phys_count_based.c.vbe_sum).where(
-                (phys_count_based.c.detail_id == detail_id) & phys_count_based.c.point.ST_Within(query.wkt)
+            stmt = select(phys_count_based.c.point, phys_count_based.c.VBE_Sum).where(
+                (phys_count_based.c.DETAIL_ID == detail_id) & phys_count_based.c.point.ST_Within(query.wkt)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
@@ -62,8 +62,8 @@ def get_physicians(query: Polygon, supply_level: str, facility_type: str, facili
             phys_count_based = get_table("physicians_count_based")
             if phys_count_based is None:
                 return (locations, weights)
-            stmt = select(phys_count_based.c.point, phys_count_based.c.pys_count).where(
-                (phys_count_based.c.detail_id == detail_id) & phys_count_based.c.point.ST_Within(query.wkt)
+            stmt = select(phys_count_based.c.point, phys_count_based.c.Pys_Count).where(
+                (phys_count_based.c.DETAIL_ID == detail_id) & phys_count_based.c.point.ST_Within(query.wkt)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
