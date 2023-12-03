@@ -44,23 +44,3 @@ def build_remote_grid(features: list, extent: tuple[float, float, float, float])
 
     layer_id = resp.json()["id"]
     return layer_id
-
-
-def build_geoserver_grid(features: list, extent: tuple[float, float, float, float]) -> str:
-    """
-    Creates layer on geoserver and returns wms-layer name.
-    """
-    # features = []
-    # for i, p in enumerate(points):
-    #     if not filt(i):
-    #         continue
-    #     access: float = float(values[i])
-    #     features.append((access, p[0], p[1]))
-
-    # # test geosever
-    # add_results(features)
-
-    # geo = open_conncection(config.GEOSERVER_URL, 'admin', 'geoserver')
-    # add_featurestore(geo, "access_data", "demo", "access")
-
-    return "access"

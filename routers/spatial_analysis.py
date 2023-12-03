@@ -16,8 +16,8 @@ from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
-from access.aggregate_query import calcAggregateQuery
-from access.gravity import calcGravity
+from oas_api.aggregate_query import calcAggregateQuery
+from oas_api.gravity import calcGravity
 
 
 router = APIRouter()
@@ -35,7 +35,7 @@ class SpatialAnalysisRequest(BaseModel):
 
 
 @router.post("/grid")
-async def spatial_access_api(req: SpatialAnalysisRequest):
+async def spatial_analysis_api(req: SpatialAnalysisRequest):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))

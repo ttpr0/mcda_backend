@@ -7,9 +7,9 @@ from geoalchemy2 import load_spatialite
 
 import config
 
-# ENGINE: Engine = create_engine(f"postgresql+psycopg2://{config.POSTGIS_USER}:{config.POSTGIS_PASSWORD}@{config.POSTGIS_HOST}:5432/{config.POSTGIS_DB}")
-ENGINE: Engine = create_engine("sqlite:///./files/gis.db")
-listen(ENGINE, "connect", load_spatialite)
+ENGINE: Engine = create_engine(f"postgresql+psycopg2://{config.POSTGIS_USER}:{config.POSTGIS_PASSWORD}@{config.POSTGIS_HOST}:5432/{config.POSTGIS_DB}")
+# ENGINE: Engine = create_engine("sqlite:///./files/gis.db")
+# listen(ENGINE, "connect", load_spatialite)
 
 META_DATA: MetaData = MetaData()
 META_DATA.reflect(bind=ENGINE)

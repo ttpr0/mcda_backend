@@ -14,7 +14,7 @@ import config
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
-from access.n_nearest_query import calcNearestQuery, calcNearestQuery2, calcNearestQuery3
+from oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2, calcNearestQuery3
 
 
 class GridFeature:

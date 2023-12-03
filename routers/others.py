@@ -14,12 +14,12 @@ import config
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
-from helpers.responses import GridFeature, build_remote_grid
+from helpers.responses import GridFeature
 
-from access.fca import calcFCA, calcFCA2, calcFCA3, calcRange
-from access.n_nearest_query import calcNearestQuery
-from access.aggregate_query import calcAggregateQuery
-from access.gravity import calcGravity
+from oas_api.fca import calcFCA
+from oas_api.n_nearest_query import calcNearestQuery
+from oas_api.aggregate_query import calcAggregateQuery
+from oas_api.gravity import calcGravity
 
 router = APIRouter()
 
@@ -32,7 +32,7 @@ class FCARequest(BaseModel):
     envelop: tuple[float, float, float, float]
 
 
-@router.post("/fca0/grid")
+@router.post("/fca/grid")
 async def fca_api(req: FCARequest):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
@@ -45,146 +45,36 @@ async def fca_api(req: FCARequest):
     task = asyncio.create_task(calcFCA(
         points, weights, req.facility_locations, facility_weights, req.ranges, req.range_factors, req.mode))
 
-    features: list[GridFeature] = []
-    minx, miny, maxx, maxy = get_extent(utm_points)
-
-    accessibilities = await task
-    min_val = 1000000000
-    max_val = -1000000000
-    for i, p in enumerate(utm_points):
-        access: float = accessibilities[i]
-        if access >= 0:
-            if access > max_val:
-                max_val = access
-            if access < min_val:
-                min_val = access
-        else:
-            access = -9999
-        features.append(GridFeature(p[0], p[1], {
-            "accessibility": access
-        }))
-
-    extend = [minx-50, miny-50, maxx+50, maxy+50]
-    dx = extend[2] - extend[0]
-    dy = extend[3] - extend[1]
-    size = [int(dx/100), int(dy/100)]
-
-    crs = "EPSG:25832"
-
-    return {"features": features, "crs": crs, "extend": extend, "size": size, "min": min_val, "max": max_val}
-
-@router.post("/fca/grid")
-async def fca_api_1(req: FCARequest):
-
-    # facility_weights = np.random.randint(1, 100, size=(len(req.facility_locations),)).tolist()
-    facility_weights: list[float] = [1000] * len(req.facility_locations)
-
-    task = asyncio.create_task(calcFCA2(
-        req.envelop, req.facility_locations, facility_weights, req.ranges[-1]))
-
-    accessibilities, utm_points = await task
-
-    features: list[GridFeature] = []
-    minx, miny, maxx, maxy = get_extent(utm_points)
-
-    min_val = 1000000000
-    max_val = -1000000000
-    for i, p in enumerate(utm_points):
-        access: float = accessibilities[i]
-        if access >= 0:
-            if access > max_val:
-                max_val = access
-            if access < min_val:
-                min_val = access
-        else:
-            access = -9999
-        features.append(GridFeature(p[0], p[1], {
-            "accessibility": access
-        }))
-
-    extend = [minx-50, miny-50, maxx+50, maxy+50]
-    dx = extend[2] - extend[0]
-    dy = extend[3] - extend[1]
-    size = [int(dx/100), int(dy/100)]
-
-    crs = "EPSG:25832"
-
-    return {"features": features, "crs": crs, "extend": extend, "size": size, "min": min_val, "max": max_val}
-
-@router.post("/fca2/grid")
-async def fca_api2(req: FCARequest):
-    ll = (req.envelop[0], req.envelop[1])
-    ur = (req.envelop[2], req.envelop[3])
-    query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    points, utm_points, weights = get_population(query)
-
-    facility_weights: list[float] = [1000] * len(req.facility_locations)
-
-    task = asyncio.create_task(calcFCA3(
-        points, weights, req.facility_locations, facility_weights, req.ranges[-1] * 0.8, req.mode))
-    # task = asyncio.create_task(calcRange(
-    #     points, req.facility_locations[0], int(req.ranges[-1] * 0.8), req.mode))
-
-    features: list[GridFeature] = []
-    minx, miny, maxx, maxy = get_extent(utm_points)
-
-    accessibilities = await task
-    min_val = 1000000000
-    max_val = -1000000000
-    for i, p in enumerate(utm_points):
-        access: float = float(accessibilities[i])
-        if access != 0:
-            if access > max_val:
-                max_val = access
-            if access < min_val:
-                min_val = access
-        else:
-            access = -9999
-        features.append(GridFeature(p[0], p[1], {
-            "accessibility": access
-        }))
-
-    extend = [minx-50, miny-50, maxx+50, maxy+50]
-    dx = extend[2] - extend[0]
-    dy = extend[3] - extend[1]
-    size = [int(dx/100), int(dy/100)]
-
-    crs = "EPSG:25832"
-
-    return {"features": features, "crs": crs, "extend": extend, "size": size, "min": min_val, "max": max_val}
-
-@router.post("/fca3/grid")
-async def fca_api3(req: FCARequest):
-    ll = (req.envelop[0], req.envelop[1])
-    ur = (req.envelop[2], req.envelop[3])
-    query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    points, utm_points, weights = get_population(query)
-
-    facility_weights = np.random.randint(1, 100, size=(len(req.facility_locations),)).tolist()
-
-    task = asyncio.create_task(calcFCA(
-        points, weights, req.facility_locations, facility_weights, req.ranges, req.range_factors, req.mode))
-
-    minx, miny, maxx, maxy = get_extent(utm_points)
-    extend = (minx-50, miny-50, maxx+50, maxy+50)
-    crs = "EPSG:25832"
-
-    accessibilities = await task
-
     features: list = []
+    minx, miny, maxx, maxy = get_extent(utm_points)
+
+    accessibilities = await task
+    min_val = 1000000000
+    max_val = -1000000000
     for i, p in enumerate(utm_points):
         access: float = accessibilities[i]
+        if access >= 0:
+            if access > max_val:
+                max_val = access
+            if access < min_val:
+                min_val = access
+        else:
+            access = -9999
         features.append({
-            "x": p[0],
-            "y": p[1],
-            "values": {
-                "accessibility": access
+            "coordinates": [p[0], p[1]],
+            "properties": {
+                "accessibility": access,
             }
         })
 
-    layer_id = build_remote_grid(features, extend)
+    extend = [minx-50, miny-50, maxx+50, maxy+50]
+    dx = extend[2] - extend[0]
+    dy = extend[3] - extend[1]
+    size = [int(dx/100), int(dy/100)]
 
-    return {"url": "http://localhost:5004", "id": layer_id, "crs": crs, "extend": extend}
+    crs = "EPSG:25832"
+
+    return {"features": features, "crs": crs, "extend": extend, "size": size, "min": min_val, "max": max_val}
 
 
 class NearestQueryRequest(BaseModel):
