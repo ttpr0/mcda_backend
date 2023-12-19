@@ -73,15 +73,23 @@ def insertPhysicians() -> None:
         # load physicians data
         with open(config.SPATIAL_ACCESS_DIR + "/outpatient_physicians_location_based.geojson", "r") as file:
             data = json.loads(file.read())
+            vals = []
             for feature in data["features"]:
                 props = feature["properties"]
                 point = Point(feature["geometry"]["coordinates"])
                 typ_id = int(props["TYP_ID"])
                 detail_id = int(props["DETAIL_ID_1"])
-                stmt = insert(loc_table).values(point=from_shape(point), TYP_ID=typ_id, DETAIL_ID=detail_id, count=1)
-                session.execute(stmt)
+                vals.append({
+                    "point": from_shape(point),
+                    "TYP_ID": typ_id,
+                    "DETAIL_ID": detail_id,
+                    "count": 1,
+                })
+            stmt = insert(loc_table).values(vals)
+            session.execute(stmt)
         with open(config.SPATIAL_ACCESS_DIR + "/outpatient_physician_location_specialist_count.geojson", "r") as file:
             data = json.loads(file.read())
+            vals = []
             for feature in data["features"]:
                 props = feature["properties"]
                 point = Point(feature["geometry"]["coordinates"])
@@ -89,8 +97,15 @@ def insertPhysicians() -> None:
                 detail_id = int(props["DETAIL_ID_1"])
                 vbe_sum = float(props["VBE_Sum"])
                 pys_count = float(props["Pys_count"])
-                stmt = insert(count_table).values(point=from_shape(point), TYP_ID=typ_id, DETAIL_ID=detail_id, VBE_Sum=vbe_sum, Pys_Count=pys_count)
-                session.execute(stmt)
+                vals.append({
+                    "point": from_shape(point),
+                    "TYP_ID": typ_id,
+                    "DETAIL_ID": detail_id,
+                    "VBE_Sum": vbe_sum,
+                    "Pys_Count": pys_count,
+                })
+            stmt = insert(count_table).values(vals)
+            session.execute(stmt)
         session.commit()
 
 def insertSupplyLevels() -> None:
@@ -257,11 +272,19 @@ def insertFacilities():
         for facility in facilities:
             with open(config.FACILITY_DIR + "/" + facility + ".geojson", "r") as file:
                 data = json.loads(file.read())
+                vals = []
                 for feature in data["features"]:
                     weight = random.randrange(0, 100, 1)
                     point = Point(feature["geometry"]["coordinates"])
-                    stmt = insert(facil_table).values(group=facility, point=from_shape(point), wgs_x=point.x, wgs_y=point.y, weight=weight)
-                    session.execute(stmt)
+                    vals.append({
+                        "group": facility,
+                        "point": from_shape(point),
+                        "wgs_x": point.x,
+                        "wgs_y": point.y,
+                        "weight": weight,
+                    })
+                stmt = insert(facil_table).values(vals)
+                session.execute(stmt)
         session.commit()
 
 
