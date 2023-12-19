@@ -1,23 +1,59 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from sqlalchemy import create_engine, Column, Integer, String
-from geoalchemy2 import Geometry
+from sqlalchemy import select
 from geoalchemy2.shape import from_shape, to_shape
 from sqlalchemy.orm import Session, declarative_base
 from shapely import Point, Polygon
 
-# from . import Base
 
-# class PlanningArea(Base):
-#     __tablename__ = "planning_areas"
+from . import ENGINE, get_table
 
-#     pid = Column("pid", Integer, primary_key=True, autoincrement=True)
-#     name = Column("name", String(50))
-#     geom = Column("geom", Geometry('POLYGON'))
+def get_planning_area(supply_level: str, planning_area: str) -> Polygon|None:
+    area_table = get_table("planning_areas")
+    if area_table is None:
+        return None
+    with Session(ENGINE) as session:
+        stmt = select(area_table.c.geom).where(area_table.c.name == planning_area)
+        rows = session.execute(stmt).fetchall()
+        for row in rows:
+            return to_shape(row[0])
+        return None
 
-#     def __init__(self, name: str, geom: Polygon):
-#         self.name = name
-#         self.geom = from_shape(geom)
-    
-#     def __repr__(self):
-#         return f"id: {self.pid}, name: {self.name}"
+SUPPLY_LEVELS = {
+    "generalPhysician": {"text": "Hausärztliche Versorgung - Versorgungsebene 1", "valid": True},
+    "generalSpecialist": {"text": "Allgemeine fachärztliche Versorgung  - Versorgungsebene 2", "valid": True},
+    "specializedSpecialist": {"text": "Spezialisierte fachärztliche Versorgung - Versorgungsebene 3", "valid": False},
+    "lowerSaxony": {"text": "Niedersachsen - Versorgungsebene / KV-Bezirk", "valid": True}
+}
+
+PLANNING_AREAS = {
+    "generalPhysician": {
+        "aurich": {"text": "Aurich"},
+        "emden": {"text": "Emden"},
+        "jever": {"text": "Jever"},
+        "norden": {"text": "Norden"},
+        "varel": {"text": "Varel"},
+        "wilhelmshaven": {"text": "Wilhelmshaven"},
+        "wittmund": {"text": "Wittmund"}
+    },
+    "generalSpecialist": {
+        "aurich": {"text": "Aurich"},
+        "emden": {"text": "Emden"},
+        "jever": {"text": "Jever"},
+        "norden": {"text": "Norden"},
+        "varel": {"text": "Varel"},
+        "wilhelmshaven": {"text": "Wilhelmshaven"},
+        "wittmund": {"text": "Wittmund"}
+    },
+    "specializedSpecialist": {
+    },
+    "lowerSaxony": {
+        "niedersachsen": {"text": "Niedersachsen"},
+    }
+}
+
+def get_available_supply_levels():
+    return SUPPLY_LEVELS
+
+def get_available_planning_areas():
+    return PLANNING_AREAS

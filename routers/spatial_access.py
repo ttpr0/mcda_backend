@@ -10,8 +10,9 @@ import config
 
 from oas_api.fca import calcFCA
 from models.population import get_population, convert_population_keys
-from models.physicians import get_planning_area, get_physicians
-from helpers.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
+from models.physicians import get_physicians
+from models.planning_areas import get_planning_area
+from models.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
 from helpers.util import get_extent
 
 

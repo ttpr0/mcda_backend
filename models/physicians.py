@@ -7,16 +7,6 @@ from shapely import Point, Polygon
 
 from . import ENGINE, get_table
 
-def get_planning_area(supply_level: str, planning_area: str) -> Polygon|None:
-    area_table = get_table("planning_areas")
-    if area_table is None:
-        return None
-    with Session(ENGINE) as session:
-        stmt = select(area_table.c.geom).where(area_table.c.name == planning_area)
-        rows = session.execute(stmt).fetchall()
-        for row in rows:
-            return to_shape(row[0])
-        return None
 
 def get_physicians(query: Polygon, supply_level: str, facility_type: str, facility_cap: str) -> tuple[list[tuple[float, float]], list[float]]:
     locations = []
@@ -73,73 +63,43 @@ def get_physicians(query: Polygon, supply_level: str, facility_type: str, facili
     
     return (locations, weights)
 
-# from . import Base
+PHYSICIAN_GROUPS = {
+    "generalPhysician": {
+        "general_physician": {"text": "Hausärzte"}
+    },
+    "generalSpecialist": {
+        "augenarzte": {"text": "Augenärzte"},
+        "surgeon": {"text": "Chirurgen und Orthopäden"},
+        "frauenarzte": {"text": "Frauenärzte"},
+        "dermatologist": {"text": "Hautärzte"},
+        "hno_arzte": {"text": "HNO-Ärzte"},
+        "paediatrician": {"text": "Kinderärzte"},
+        "neurologist": {"text": "Nervenärzte"},
+        "psychotherapist": {"text": "Psychotherapeuten"},
+        "urologist": {"text": "Urologen"}
+    },
+    "specializedSpecialist": {
+        "internisten": {"text": "fachärztlich tätige Internisten"},
+        "jugendpsychiater": {"text": "Kinder- und Jugendpsychiater"},
+        "radiologen": {"text": "Radiologen"},
+        "anasthesisten": {"text": "Anästhesisten"}
+    },
+    "lowerSaxony": {
+        "augenarzte": {"text": "Augenärzte"},
+        "surgeon": {"text": "Chirurgen und Orthopäden"},
+        "frauenarzte": {"text": "Frauenärzte"},
+        "dermatologist": {"text": "Hautärzte"},
+        "hno_arzte": {"text": "HNO-Ärzte"},
+        "paediatrician": {"text": "Kinderärzte"},
+        "neurologist": {"text": "Nervenärzte"},
+        "psychotherapist": {"text": "Psychotherapeuten"},
+        "urologist": {"text": "Urologen"},
+        "internisten": {"text": "fachärztlich tätige Internisten"},
+        "jugendpsychiater": {"text": "Kinder- und Jugendpsychiater"},
+        "radiologen": {"text": "Radiologen"},
+        "anasthesisten": {"text": "Anästhesisten"}
+    }
+}
 
-
-# class SupplyLevelList(Base):
-#     __tablename__ = "supply_level_list"
-
-#     pid = Column("pid", Integer, primary_key=True, autoincrement=True)
-#     name = Column("name", String(50))
-#     typ_id = Column("TYP_ID", Integer)
-
-#     def __init__(self, name: str, typ_id: int):
-#         self.name = name
-#         self.typ_id = typ_id
-    
-#     def __repr__(self):
-#         return f"id: {self.pid}, typ: {self.typ_id}"
-
-# class PhysiciansList(Base):
-#     __tablename__ = "physicians_list"
-
-#     pid = Column("pid", Integer, primary_key=True, autoincrement=True)
-#     name = Column("name", String(50))
-#     typ_id = Column("TYP_ID", Integer)
-#     detail_id = Column("DETAIL_ID", Integer)
-
-#     def __init__(self, name: str, typ_id: int, detail_id: int):
-#         self.name = name
-#         self.typ_id = typ_id
-#         self.detail_id = detail_id
-    
-#     def __repr__(self):
-#         return f"id: {self.pid}, typ: {self.typ_id}"
-
-# class PhysiciansLocationBased(Base):
-#     __tablename__ = "physicians_location_based"
-
-#     pid = Column("pid", Integer, primary_key=True, autoincrement=True)
-#     point = Column("point", Geometry('POINT'))
-#     typ_id = Column("TYP_ID", Integer)
-#     detail_id = Column("DETAIL_ID", Integer)
-#     count = Column("count", Integer)
-
-#     def __init__(self, point: Point, typ_id: int, detail_id: int):
-#         self.point = from_shape(point)
-#         self.typ_id = typ_id
-#         self.detail_id = detail_id
-#         self.count = 1
-    
-#     def __repr__(self):
-#         return f"id: {self.pid}, typ: {self.typ_id}"
-    
-# class PhysiciansCountBased(Base):
-#     __tablename__ = "physicians_count_based"
-
-#     pid = Column("pid", Integer, primary_key=True, autoincrement=True)
-#     point = Column("point", Geometry('POINT'))
-#     typ_id = Column("TYP_ID", Integer)
-#     detail_id = Column("DETAIL_ID", Integer)
-#     vbe_sum = Column("VBE_Sum", Float)
-#     pys_count = Column("Pys_Count", Float)
-
-#     def __init__(self, point: Point, typ_id: int, detail_id: int, vbe_sum: float, pys_count: float):
-#         self.point = from_shape(point)
-#         self.typ_id = typ_id
-#         self.detail_id = detail_id
-#         self.vbe_sum = vbe_sum
-#         self.pys_count = pys_count
-    
-#     def __repr__(self):
-#         return f"id: {self.pid}, typ: {self.typ_id}"
+def get_available_physicians():
+    return PHYSICIAN_GROUPS

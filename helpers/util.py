@@ -15,10 +15,3 @@ def get_extent(points: list[tuple[float, float]]) -> tuple[float, float, float, 
         if p[1] > maxy:
             maxy = p[1]
     return minx, miny, maxx, maxy
-
-def get_available_travelmodes():
-    return [
-        {"name": "driving-car", "text": "PKW"},
-        {"name": "public-transit", "text": "ÖPNV"}
-    ]
-

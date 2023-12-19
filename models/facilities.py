@@ -24,25 +24,45 @@ def get_facility(name: str, envelop: Polygon) -> tuple[list[tuple[float, float]]
             weights.append(weight)
     return locations, weights
 
-# from . import Base
+FACILITIES = {
+    "localSupply": {
+        "text": "localSupply.text",
+        "items": {
+            "supermarket": {"text": "localSupply.supermarket"},
+            "discounter": {"text": "localSupply.discounter"},
+            "other_local_supply": {"text": "localSupply.otherLocalSupply", "tooltip": "tooltip.otherLocalSupply"}
+        }
+    },
+    "health": {
+        "text": "health.text",
+        "items": {
+            "pharmacy": {"text": "health.pharmacy"},
+            "clinic": {"text": "health.clinic"},
+            "physicians": {"text": "health.physicians.text", "items": {
+                "general_physician": {"text": "health.physicians.generalPhysicians"},
+                "paediatrician": {"text": "health.physicians.paediatrician"},
+                "ophthalmologist": {"text": "health.physicians.ophthalmologist"},
+                "surgeon": {"text": "health.physicians.surgeon"},
+                "gynaecologist": {"text": "health.physicians.gynaecologist"},
+                "dermatologist": {"text": "health.physicians.dermatologist"},
+                "otolaryngologist": {"text": "health.physicians.otolaryngologist"},
+                "neurologist": {"text": "health.physicians.neurologist"},
+                "psychotherapist": {"text": "health.physicians.psychotherapists"},
+                "urologist": {"text": "health.physicians.urologists"}
+            }
+            }
+        }
+    },
+    "education": {
+        "text": "education.text",
+        "items": {
+            "nursery": {"text": "education.nursery", "tooltip": "tooltip.nursery"},
+            "primary_school": {"text": "education.primarySchool", "tooltip": "tooltip.primarySchool"},
+            "secondary_school_1": {"text": "education.secondarySchool1", "tooltip": "tooltip.secondarySchool1"},
+            "secondary_school_2": {"text": "education.secondarySchool2", "tooltip": "tooltip.secondarySchool2"}
+        }
+    }
+}
 
-# class Facility(Base):
-#     __tablename__ = "facilities"
-
-#     pid = Column("pid", Integer, primary_key=True, autoincrement=True)
-#     group = Column("group", String)
-#     point = Column("point", Geometry('POINT'), index=True)
-#     wgs_x = Column("wgs_x", Float)
-#     wgs_y = Column("wgs_y", Float)
-#     weight = Column("weight", Float)
-
-
-#     def __init__(self, group: str, point: Point, weight: float):
-#         self.group = group
-#         self.point = from_shape(point)
-#         self.wgs_x = point.x
-#         self.wgs_y = point.y
-#         self.weight = weight
-    
-#     def __repr__(self):
-#         return f"User {self.pid}"
+def get_available_facilities():
+    return FACILITIES

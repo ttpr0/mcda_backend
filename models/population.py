@@ -287,3 +287,27 @@ def convert_population_keys(typ: str, keys: list[str]) -> list[int]|None:
 #                 weight += val
 #             weights.append(weight)
 #     return locations, utm_locations, weights
+
+
+POPULATION_VALUES = {
+    "standard": {
+        "std_00_09": (0, 9),
+        "std_10_19": (10, 19),
+        "std_20_39": (20, 39),
+        "std_40_59": (40, 59),
+        "std_60_79": (60, 79),
+        "std_80x": (80,)
+    },
+    "kids": {
+        "ksc_00_02": (0, 2),
+        "ksc_03_05": (3, 5),
+        "ksc_06_09": (6, 9),
+        "ksc_10_14": (10, 14),
+        "ksc_15_17": (15, 17),
+        "ksc_18_19": (18, 19),
+        "ksc_20x": (20,)
+    },
+}
+
+def get_available_population():
+    return POPULATION_VALUES
