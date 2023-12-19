@@ -42,6 +42,6 @@ async def get_supply_levels():
 async def get_planning_areas():
     return get_available_planning_areas()
 
-@router.get("/physicans")
+@router.get("/physicians")
 async def get_physicians():
     return get_available_physicians()

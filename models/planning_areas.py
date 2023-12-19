@@ -49,6 +49,7 @@ PLANNING_AREAS = {
     },
     "lowerSaxony": {
         "niedersachsen": {"text": "Niedersachsen"},
+        "kv_bezirk": {"text": "KV-Bezirk"},
     }
 }
 
