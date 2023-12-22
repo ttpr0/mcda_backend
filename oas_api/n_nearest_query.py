@@ -34,7 +34,7 @@ async def calcNearestQuery(population_locations: list[tuple[float, float]], popu
     return arr
 
 
-async def calcNearestQuery2(population_locations: list[tuple[float, float]], envelop: tuple[float, float, float, float], facilities: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], facility_count: int, compute_type: str) -> tuple[list[float], str]:
+async def calcNearestQuery2(population_locations: list[tuple[float, float]], envelop: tuple[float, float, float, float], facilities: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], facility_count: int, compute_type: str) -> list[float]:
     header = {'Content-Type': 'application/json'}
     body = {
         "demand": {
@@ -53,20 +53,4 @@ async def calcNearestQuery2(population_locations: list[tuple[float, float]], env
     loop = asyncio.get_running_loop()
     response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/queries/n_nearest", json=body, headers=header))
     accessibilities = response.json()
-    return accessibilities["result"], accessibilities["session_id"]
-
-
-async def calcNearestQuery3(query_id: str, facility_weights: list[float], facility_count: int, compute_type: str) -> tuple[list[float], str]:
-    header = {'Content-Type': 'application/json'}
-    body = {
-        "session_id": query_id,
-        "supply": {
-            "supply_weights": facility_weights,
-        },
-        "facility_count": facility_count,
-        "compute_type": compute_type,
-    }
-    loop = asyncio.get_running_loop()
-    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/queries/n_nearest", json=body, headers=header))
-    accessibilities = response.json()
-    return accessibilities["result"], accessibilities["session_id"]
+    return accessibilities["result"]

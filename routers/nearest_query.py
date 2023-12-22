@@ -14,7 +14,7 @@ import config
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
-from oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2, calcNearestQuery3
+from oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2
 
 
 class GridFeature:
@@ -146,15 +146,8 @@ async def computeValue(req: NearestQueryComputedRequest):
     else:
         if session.query_id is None:
             task = asyncio.create_task(calcNearestQuery2(session.population_locations, session.envelop, session.facility_locations, session.facility_weights, session.ranges, session.facility_count, req.compute_type))
-            accessibilities, query_id = await task
+            accessibilities = await task
 
-            session.query_id = query_id
-            session.compute_type = req.compute_type
-            session.result = accessibilities
-        else:
-            task = asyncio.create_task(calcNearestQuery3(session.query_id, session.facility_weights, session.facility_count, req.compute_type))
-            accessibilities, query_id = await task
-        
             session.compute_type = req.compute_type
             session.result = accessibilities
 

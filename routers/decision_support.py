@@ -13,7 +13,7 @@ from models.population import get_population, convert_population_keys
 from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
-from oas_api.multi_criteria import calcMultiCriteria, Infrastructure
+from oas_api.multi_criteria import calcMultiCriteria, Infrastructure, calcMultiCriteria2
 
 
 router = APIRouter()
@@ -53,7 +53,7 @@ async def decision_support_api(req: MultiCriteriaRequest):
         facility_points, facility_weights = get_facility(param.facility_type, buffer_query)
         infrastructures[name] = Infrastructure(param.infrastructure_weight, param.ranges, param.range_factors, facility_points, facility_weights)
 
-    task = asyncio.create_task(calcMultiCriteria(population_locations, population_weights, infrastructures))
+    task = asyncio.create_task(calcMultiCriteria2(population_locations, population_weights, infrastructures))
 
     features: list = []
     minx, miny, maxx, maxy = get_extent(utm_points)

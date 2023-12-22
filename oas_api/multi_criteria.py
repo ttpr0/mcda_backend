@@ -8,7 +8,6 @@ import asyncio
 import numpy as np
 
 import config
-from .oas_population import store_population
 from .reachability import calcReachability
 
 
@@ -28,13 +27,11 @@ class Infrastructure():
 
 
 async def calcMultiCriteria(population_locations: list[tuple[float, float]], population_weights: list[int], infrastructures: dict[str, Infrastructure]) -> dict[str, list[float]]:
-    population_id = await store_population(population_locations, population_weights)
-
     tasks: list[asyncio.Task] = []
     weight_sum = 0
     names = []
     for name, infra in infrastructures.items():
-        tasks.append(asyncio.create_task(calcReachability(population_id, infra.locations, infra.weights, infra.ranges, infra.range_factors)))
+        tasks.append(asyncio.create_task(calcReachability(population_locations, population_weights, infra.locations, infra.weights, infra.ranges, infra.range_factors)))
         names.append(name)
         weight_sum += infra.weight
 
@@ -51,6 +48,47 @@ async def calcMultiCriteria(population_locations: list[tuple[float, float]], pop
             multi[j] += weight * arr[j]
         accessibilities[name] = arr
     if multi is not None:
-        accessibilities["multiCritera"] = multi
+        accessibilities["multiCriteria"] = multi
 
     return accessibilities
+
+async def calcMultiCriteria2(population_locations: list[tuple[float, float]], population_weights: list[int], infrastructures: dict[str, Infrastructure]) -> dict[str, list[float]]:
+    infras = {}
+    for name, obj in infrastructures.items():
+        infras[name] = {
+            "infrastructure_weight": obj.weight,
+            "supply": {
+                "supply_locations": obj.locations,
+                "supply_weights": obj.weights,
+            },
+            "decay": {
+                "decay_type": "hybrid",
+                "ranges": obj.ranges,
+                "range_factors": obj.range_factors
+            },
+        }
+    header = {'Content-Type': 'application/json'}
+    body = {
+        "infrastructures": infras,
+        "demand": {
+            "demand_locations": population_locations,
+            "demand_weights": population_weights,
+        },
+        "routing": {
+            "profile": "driving-car",
+            "range_type": "time",
+            "location_type": "destination",
+            "isochrone_smoothing": 5
+        },
+        "response": {
+            "scale": True,
+            "scale_range": [0, 100],
+            "no_data_value": -9999,
+        },
+        "return_all": True,
+        "return_weighted": False,
+    }
+    loop = asyncio.get_running_loop()
+    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/accessibility/multi", json=body, headers=header))
+    accessibilities = response.json()
+    return accessibilities["access"]

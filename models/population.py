@@ -301,7 +301,7 @@ POPULATION_VALUES = {
             "std_80x": (80,)
         }
     },
-    "kids": {
+    "kita_schul": {
         "text": "stepFour.accordion.accordion4_3",
         "items": {
             "ksc_00_02": (0, 2),
