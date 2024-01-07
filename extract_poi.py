@@ -1,3 +1,5 @@
+# Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
+
 import json
 from shapely import contains_xy, Polygon
 import sqlite3

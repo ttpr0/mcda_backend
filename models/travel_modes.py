@@ -20,13 +20,6 @@ def get_default_travel_mode() -> str:
     return DEFAULT_TRAVEL_MODE
 
 def get_available_travelmodes():
-    """Returns all available travel modes as dictionary:
-    ```json
-    {
-        "travel-mode": {"text": "i18n-key", "valid": True}
-    }
-    ```
-    """
     return TRAVEL_MODES
 
 def is_valid_travel_mode(travel_mode: str) -> bool:
