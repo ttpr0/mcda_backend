@@ -3,15 +3,15 @@
 DEFAULT_TRAVEL_MODE = "driving-car"
 TRAVEL_MODES = {
     "driving-car": {
-        "text": "PKW",
+        "text": "travelModes.pkw",
         "valid": True
     },
     "walking-foot": {
-        "text": "Fuß",
+        "text": "travelModes.fuss",
         "valid": False
     },
     "public-transit": {
-        "text": "ÖPNV",
+        "text": "travelModes.opnv",
         "valid": False
     },
 }
@@ -32,13 +32,13 @@ def is_valid_travel_mode(travel_mode: str) -> bool:
 
 DISTANCE_DECAYS = {
     "linear": {
-        "text": "Linear"
+        "text": "distanceDecays.linear"
     },
     "patient_behavior": {
-        "text": "KV-Abrechnungsdaten / Patientenverhalten"
+        "text": "distanceDecays.patientBehavior"
     },
     "minimum_standards": {
-        "text": "Mindesterreichbarkeitsstandards"
+        "text": "distanceDecays.minimumStandards"
     }
 }
 

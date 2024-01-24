@@ -291,7 +291,7 @@ def convert_population_keys(typ: str, keys: list[str]) -> list[int]|None:
 
 POPULATION_VALUES = {
     "standard": {
-        "text": "stepFour.accordion.accordion4_2",
+        "text": "population.groups.standard",
         "items": {
             "std_00_09": (0, 9),
             "std_10_19": (10, 19),
@@ -302,7 +302,7 @@ POPULATION_VALUES = {
         }
     },
     "kita_schul": {
-        "text": "stepFour.accordion.accordion4_3",
+        "text": "population.groups.kitaSchul",
         "items": {
             "ksc_00_02": (0, 2),
             "ksc_03_05": (3, 5),

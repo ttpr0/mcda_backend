@@ -65,39 +65,39 @@ def get_physicians(query: Polygon, supply_level: str, facility_type: str, facili
 
 PHYSICIAN_GROUPS = {
     "generalPhysician": {
-        "general_physician": {"text": "Hausärzte"}
+        "general_physician": {"text": "physicians.generalPhysician"}
     },
     "generalSpecialist": {
-        "augenarzte": {"text": "Augenärzte"},
-        "surgeon": {"text": "Chirurgen und Orthopäden"},
-        "frauenarzte": {"text": "Frauenärzte"},
-        "dermatologist": {"text": "Hautärzte"},
-        "hno_arzte": {"text": "HNO-Ärzte"},
-        "paediatrician": {"text": "Kinderärzte"},
-        "neurologist": {"text": "Nervenärzte"},
-        "psychotherapist": {"text": "Psychotherapeuten"},
-        "urologist": {"text": "Urologen"}
+        "augenarzte": {"text": "physicians.augenarzte"},
+        "surgeon": {"text": "physicians.surgeon"},
+        "frauenarzte": {"text": "physicians.frauenarzte"},
+        "dermatologist": {"text": "physicians.dermatologist"},
+        "hno_arzte": {"text": "physicians.hnoArzte"},
+        "paediatrician": {"text": "physicians.paediatrician"},
+        "neurologist": {"text": "physicians.neurologist"},
+        "psychotherapist": {"text": "physicians.psychotherapist"},
+        "urologist": {"text": "physicians.urologist"}
     },
     "specializedSpecialist": {
-        "internisten": {"text": "fachärztlich tätige Internisten"},
-        "jugendpsychiater": {"text": "Kinder- und Jugendpsychiater"},
-        "radiologen": {"text": "Radiologen"},
-        "anasthesisten": {"text": "Anästhesisten"}
+        "internisten": {"text": "physicians.internisten"},
+        "jugendpsychiater": {"text": "physicians.jugendpsychiater"},
+        "radiologen": {"text": "physicians.radiologen"},
+        "anasthesisten": {"text": "physicians.anasthesisten"}
     },
     "lowerSaxony": {
-        "augenarzte": {"text": "Augenärzte"},
-        "surgeon": {"text": "Chirurgen und Orthopäden"},
-        "frauenarzte": {"text": "Frauenärzte"},
-        "dermatologist": {"text": "Hautärzte"},
-        "hno_arzte": {"text": "HNO-Ärzte"},
-        "paediatrician": {"text": "Kinderärzte"},
-        "neurologist": {"text": "Nervenärzte"},
-        "psychotherapist": {"text": "Psychotherapeuten"},
-        "urologist": {"text": "Urologen"},
-        "internisten": {"text": "fachärztlich tätige Internisten"},
-        "jugendpsychiater": {"text": "Kinder- und Jugendpsychiater"},
-        "radiologen": {"text": "Radiologen"},
-        "anasthesisten": {"text": "Anästhesisten"}
+        "augenarzte": {"text": "physicians.augenarzte"},
+        "surgeon": {"text": "physicians.surgeon"},
+        "frauenarzte": {"text": "physicians.frauenarzte"},
+        "dermatologist": {"text": "physicians.dermatologist"},
+        "hno_arzte": {"text": "physicians.hnoArzte"},
+        "paediatrician": {"text": "physicians.paediatrician"},
+        "neurologist": {"text": "physicians.neurologist"},
+        "psychotherapist": {"text": "physicians.psychotherapist"},
+        "urologist": {"text": "physicians.urologist"},
+        "internisten": {"text": "physicians.internisten"},
+        "jugendpsychiater": {"text": "physicians.jugendpsychiater"},
+        "radiologen": {"text": "physicians.radiologen"},
+        "anasthesisten": {"text": "physicians.anasthesisten"}
     }
 }
 

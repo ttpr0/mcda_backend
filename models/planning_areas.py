@@ -20,36 +20,36 @@ def get_planning_area(supply_level: str, planning_area: str) -> Polygon|None:
         return None
 
 SUPPLY_LEVELS = {
-    "generalPhysician": {"text": "Hausärztliche Versorgung - Versorgungsebene 1", "valid": True},
-    "generalSpecialist": {"text": "Allgemeine fachärztliche Versorgung  - Versorgungsebene 2", "valid": True},
-    "specializedSpecialist": {"text": "Spezialisierte fachärztliche Versorgung - Versorgungsebene 3", "valid": False},
-    "lowerSaxony": {"text": "Niedersachsen - Versorgungsebene / KV-Bezirk", "valid": True}
+    "generalPhysician": {"text": "supplyLevels.generalPhysician", "valid": True},
+    "generalSpecialist": {"text": "supplyLevels.generalSpecialist", "valid": True},
+    "specializedSpecialist": {"text": "supplyLevels.specializedSpecialist", "valid": False},
+    "lowerSaxony": {"text": "supplyLevels.lowerSaxony", "valid": True}
 }
 
 PLANNING_AREAS = {
     "generalPhysician": {
-        "aurich": {"text": "Aurich"},
-        "emden": {"text": "Emden"},
-        "jever": {"text": "Jever"},
-        "norden": {"text": "Norden"},
-        "varel": {"text": "Varel"},
-        "wilhelmshaven": {"text": "Wilhelmshaven"},
-        "wittmund": {"text": "Wittmund"}
+        "aurich": {"text": "planningAreas.aurich"},
+        "emden": {"text": "planningAreas.emden"},
+        "jever": {"text": "planningAreas.jever"},
+        "norden": {"text": "planningAreas.norden"},
+        "varel": {"text": "planningAreas.varel"},
+        "wilhelmshaven": {"text": "planningAreas.wilhelmshaven"},
+        "wittmund": {"text": "planningAreas.wittmund"}
     },
     "generalSpecialist": {
-        "aurich": {"text": "Aurich"},
-        "emden": {"text": "Emden"},
-        "jever": {"text": "Jever"},
-        "norden": {"text": "Norden"},
-        "varel": {"text": "Varel"},
-        "wilhelmshaven": {"text": "Wilhelmshaven"},
-        "wittmund": {"text": "Wittmund"}
+        "aurich": {"text": "planningAreas.aurich"},
+        "emden": {"text": "planningAreas.emden"},
+        "jever": {"text": "planningAreas.jever"},
+        "norden": {"text": "planningAreas.norden"},
+        "varel": {"text": "planningAreas.varel"},
+        "wilhelmshaven": {"text": "planningAreas.wilhelmshaven"},
+        "wittmund": {"text": "planningAreas.wittmund"}
     },
     "specializedSpecialist": {
     },
     "lowerSaxony": {
-        "niedersachsen": {"text": "Niedersachsen"},
-        "kv_bezirk": {"text": "KV-Bezirk"},
+        "niedersachsen": {"text": "planningAreas.niedersachsen"},
+        "kv_bezirk": {"text": "planningAreas.kv_bezirk"},
     }
 }
 
