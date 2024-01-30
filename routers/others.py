@@ -136,7 +136,7 @@ async def aggregate_api(req: AggregateQueryRequest):
         facility_weights[i] = random.randrange(0, 100, 1)
 
     task = asyncio.create_task(calcAggregateQuery(
-        points, weights, req.facility_locations, facility_weights, req.range, "mean"))
+        points, weights, req.facility_locations, facility_weights, req.range, "MEAN"))
 
     features: list[GridFeature] = []
     minx, miny, maxx, maxy = get_extent(utm_points)

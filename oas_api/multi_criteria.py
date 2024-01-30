@@ -89,6 +89,6 @@ async def calcMultiCriteria2(population_locations: list[tuple[float, float]], po
         "return_weighted": False,
     }
     loop = asyncio.get_running_loop()
-    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/accessibility/multi", json=body, headers=header))
+    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/multicriteria/multi", json=body, headers=header))
     accessibilities = response.json()
     return accessibilities["access"]

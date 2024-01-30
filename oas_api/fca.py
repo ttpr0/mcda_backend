@@ -40,7 +40,7 @@ async def calcFCA(population_locations: list[tuple[float, float]], population_we
     }
     loop = asyncio.get_running_loop()
     data = json.dumps(body)
-    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/accessibility/fca", data=data, headers=header))
+    response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/accessibility/enhanced_2sfca", data=data, headers=header))
     accessibilities = response.json()
     arr: list[float] = accessibilities["access"]
     return arr
