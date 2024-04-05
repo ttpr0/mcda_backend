@@ -7,12 +7,16 @@ import string
 import random
 import hashlib
 from sqlalchemy.orm import Session
-from sqlalchemy import insert, delete
+from sqlalchemy import insert, delete, Column, Integer
+from geoalchemy2 import Geometry
 from geoalchemy2.shape import from_shape
 
-import config
-from models import ENGINE, get_table
+from models import ENGINE, get_table, create_table
 
+POPULATION_FILE = "./files/population.csv"
+FACILITY_DIR = "./files/facilities"
+SPATIAL_ACCESS_DIR = "./files/physicians"
+PLANNING_AREAS_DIR = "./files/planning_areas"
 
 def insertAdminUser() -> None:
     users = [
@@ -32,88 +36,80 @@ def insertAdminUser() -> None:
             # hash password+salt
             password_bytes = ''.join([password, salt]).encode()
             h = hashlib.sha256(password_bytes).hexdigest()
-            stmt = insert(user_table).values(email=email, password_salt=salt, password_hash=h)
+            stmt = insert(user_table).values(EMAIL=email, PASSWORD_SALT=salt, PASSWORD_HASH=h)
             session.execute(stmt)
         session.commit()
 
-
 def insertPlanningAreas() -> None:
+    # additional data
+    mapping = {
+        "aurich": {"i18n_key": "planningAreas.aurich", "supply_levels": [100, 200]},
+        "emden": {"i18n_key": "planningAreas.emden", "supply_levels": [100, 200]},
+        "jever": {"i18n_key": "planningAreas.jever", "supply_levels": [100, 200]},
+        "norden": {"i18n_key": "planningAreas.norden", "supply_levels": [100, 200]},
+        "varel": {"i18n_key": "planningAreas.varel", "supply_levels": [100, 200]},
+        "wilhelmshaven": {"i18n_key": "planningAreas.wilhelmshaven", "supply_levels": [100, 200]},
+        "wittmund": {"i18n_key": "planningAreas.wittmund", "supply_levels": [100, 200]},
+        "niedersachsen": {"i18n_key": "planningAreas.niedersachsen", "supply_levels": [400]},
+        "kv_bezirk": {"i18n_key": "planningAreas.kv_bezirk", "supply_levels": [400]},
+    }
+    # inserting data
     area_table = get_table("planning_areas")
     if area_table is None:
         return
     with Session(ENGINE) as session:
         stmt = delete(area_table).where()
         session.execute(stmt)
-        # load physicians data
-        for file in os.listdir(config.PLANNING_AREAS_DIR):
-            if not os.path.isfile(os.path.join(config.PLANNING_AREAS_DIR, file)):
+        for file in os.listdir(PLANNING_AREAS_DIR):
+            if not os.path.isfile(os.path.join(PLANNING_AREAS_DIR, file)):
                 continue
-            with open(config.PLANNING_AREAS_DIR + "/" + file, "r") as file:
+            with open(PLANNING_AREAS_DIR + "/" + file, "r") as file:
                 data = json.loads(file.read())
                 for feature in data["features"]:
                     name = feature["attributes"]["HPB"].lower()
                     rings = feature["geometry"]["rings"]
                     polygon = Polygon(rings[0], rings[1:])
-                    stmt = insert(area_table).values(name=name, geom=from_shape(polygon))
+                    if name not in mapping:
+                        continue
+                    i18n_key = mapping[name]["i18n_key"]
+                    level_ids = mapping[name]["supply_levels"]
+                    stmt = insert(area_table).values(NAME=name, I18N_KEY=i18n_key, SUPPLY_LEVEL_IDS=level_ids, GEOMETRY=from_shape(polygon))
                     session.execute(stmt)
         session.commit()
 
 def insertPhysicians() -> None:
-    loc_table = get_table("physicians_location_based")
+    loc_table = get_table("physicians_locations")
     if loc_table is None:
-        return
-    count_table = get_table("physicians_count_based")
-    if count_table is None:
         return
     with Session(ENGINE) as session:
         stmt = delete(loc_table).where()
         session.execute(stmt)
-        stmt = delete(count_table).where()
-        session.execute(stmt)
         # load physicians data
-        with open(config.SPATIAL_ACCESS_DIR + "/outpatient_physicians_location_based.geojson", "r") as file:
+        with open(SPATIAL_ACCESS_DIR + "/outpatient_physician_location_specialist_count.geojson", "r") as file:
             data = json.loads(file.read())
             vals = []
             for feature in data["features"]:
                 props = feature["properties"]
                 point = Point(feature["geometry"]["coordinates"])
-                typ_id = int(props["TYP_ID"])
-                detail_id = int(props["DETAIL_ID_1"])
+                physician_id = int(props["DETAIL_ID_1"])
+                vbe_sum = float(props["VBE_Sum"])
+                phys_count = float(props["Pys_count"])
                 vals.append({
-                    "point": from_shape(point),
-                    "TYP_ID": typ_id,
-                    "DETAIL_ID": detail_id,
-                    "count": 1,
+                    "GEOMETRY": from_shape(point),
+                    "PHYSICIAN_ID": physician_id,
+                    "VBE_VOLUME": vbe_sum,
+                    "PHYSICIAN_COUNT": phys_count,
                 })
             stmt = insert(loc_table).values(vals)
-            session.execute(stmt)
-        with open(config.SPATIAL_ACCESS_DIR + "/outpatient_physician_location_specialist_count.geojson", "r") as file:
-            data = json.loads(file.read())
-            vals = []
-            for feature in data["features"]:
-                props = feature["properties"]
-                point = Point(feature["geometry"]["coordinates"])
-                typ_id = int(props["TYP_ID"])
-                detail_id = int(props["DETAIL_ID_1"])
-                vbe_sum = float(props["VBE_Sum"])
-                pys_count = float(props["Pys_count"])
-                vals.append({
-                    "point": from_shape(point),
-                    "TYP_ID": typ_id,
-                    "DETAIL_ID": detail_id,
-                    "VBE_Sum": vbe_sum,
-                    "Pys_Count": pys_count,
-                })
-            stmt = insert(count_table).values(vals)
             session.execute(stmt)
         session.commit()
 
 def insertSupplyLevels() -> None:
     supply_levels = [
-        ('generalPhysician', 100),
-        ('generalSpecialist', 200),
-        ('specializedSpecialist', 300),
-        ('lowerSaxony', 400)
+        ('generalPhysician', 100, "supplyLevels.generalPhysician", True),
+        ('generalSpecialist', 200, "supplyLevels.generalSpecialist", True),
+        ('specializedSpecialist', 300, "supplyLevels.specializedSpecialist", False),
+        ('lowerSaxony', 400, "supplyLevels.lowerSaxony", True)
     ]
     sup_table = get_table("supply_level_list")
     if sup_table is None:
@@ -121,28 +117,27 @@ def insertSupplyLevels() -> None:
     with Session(ENGINE) as session:
         stmt = delete(sup_table).where()
         session.execute(stmt)
-        # load physicians data
         for sl in supply_levels:
-            stmt = insert(sup_table).values(name=sl[0], TYP_ID=sl[1])
+            stmt = insert(sup_table).values(NAME=sl[0], I18N_KEY=sl[2], VALID=sl[3], SUPPLY_LEVEL_ID=sl[1])
             session.execute(stmt)
         session.commit()
 
 def insertPhysiciansList() -> None:
     physicians = [
-        ("general_physician", 100, 100),
-        ("augenarzte", 200, 205),
-        ("surgeon", 200, 212),
-        ("frauenarzte", 200, 235),
-        ("dermatologist", 200, 225),
-        ("hno_arzte", 200, 220),
-        ("paediatrician", 200, 245),
-        ("neurologist", 200, 230),
-        ("psychotherapist", 200, 250),
-        ("urologist", 200, 240),
-        ("internisten", 300, 302),
-        ("jugendpsychiater", 300, 303),
-        ("radiologen", 300, 304),
-        ("anasthesisten", 300, 301)
+        ("general_physician", "physicians.generalPhysician", [100], 100),
+        ("augenarzte", "physicians.augenarzte", [200, 400], 205),
+        ("surgeon", "physicians.surgeon", [200, 400], 212),
+        ("frauenarzte", "physicians.frauenarzte", [200, 400], 235),
+        ("dermatologist", "physicians.dermatologist", [200, 400], 225),
+        ("hno_arzte", "physicians.hnoArzte", [200, 400], 220),
+        ("paediatrician", "physicians.paediatrician", [200, 400], 245),
+        ("neurologist", "physicians.neurologist", [200, 400], 230),
+        ("psychotherapist", "physicians.psychotherapist", [200, 400], 250),
+        ("urologist", "physicians.urologist", [200, 400], 240),
+        ("internisten", "physicians.internisten", [300, 400], 302),
+        ("jugendpsychiater", "physicians.jugendpsychiater", [300, 400], 303),
+        ("radiologen", "physicians.radiologen", [300, 400], 304),
+        ("anasthesisten", "physicians.anasthesisten", [300, 400], 301)
     ]
     phys_table = get_table("physicians_list")
     if phys_table is None:
@@ -150,9 +145,8 @@ def insertPhysiciansList() -> None:
     with Session(ENGINE) as session:
         stmt = delete(phys_table).where()
         session.execute(stmt)
-        # load physicians data
         for sl in physicians:
-            stmt = insert(phys_table).values(name=sl[0], TYP_ID=sl[1], DETAIL_ID=sl[2])
+            stmt = insert(phys_table).values(NAME=sl[0], I18N_KEY=sl[1], SUPPLY_LEVEL_IDS=sl[2], PHYSICIAN_ID=sl[3])
             session.execute(stmt)
         session.commit()
 
@@ -164,7 +158,7 @@ def insertPopulation() -> None:
         stmt = delete(pop_table).where()
         session.execute(stmt)
         # load population data
-        with open(config.POPULATION_FILE, 'r') as file:
+        with open(POPULATION_FILE, 'r') as file:
             delimiter = ';'
             line = file.readline()
             tokens = line.split(delimiter)
@@ -258,32 +252,82 @@ def insertPopulation() -> None:
                 session.execute(stmt)
         session.commit()
 
-def insertFacilities():
-    facilities = ["clinic", "dermatologist", "discounter", "general_physician", "gynaecologist", "neurologist",
-                  "nursery", "ophthalmologist", "other_local_supply", "otolaryngologist", "paediatrician",
-                  "pharmacy", "primary_school", "psychotherapist", "secondary_school_1", "secondary_school_2",
-                  "supermarket", "surgeon", "urologist"]
-    facil_table = get_table("facilities")
-    if facil_table is None:
+def insertFacilityGroups() -> None:
+    groups = [
+        ("localSupply", "localSupply.text", 100, None),
+        ("health", "health.text", 200, None),
+        ("physicians", "health.physicians.text", 201, 200),
+        ("education", "education.text", 300, None),
+    ]
+    group_table = get_table("facilities_groups")
+    if group_table is None:
         return
     with Session(ENGINE) as session:
-        stmt = delete(facil_table).where()
+        stmt = delete(group_table).where()
+        session.execute(stmt)
+        for sl in groups:
+            stmt = insert(group_table).values(NAME=sl[0], I18N_KEY=sl[1], GROUP_ID=sl[2], SUPER_GROUP_ID=sl[3])
+            session.execute(stmt)
+        session.commit()
+
+def insertFacilities():
+    facilities = {
+        "supermarket": {"i18n_key": "localSupply.supermarket", "tooltip_key": None, "group_id": 100},
+        "discounter": {"i18n_key": "localSupply.discounter", "tooltip_key": None, "group_id": 100},
+        "other_local_supply": {"i18n_key": "localSupply.otherLocalSupply", "tooltip_key": "tooltip.otherLocalSupply", "group_id": 100},
+        "clinic": {"i18n_key": "health.clinic", "tooltip_key": None, "group_id": 200},
+        "pharmacy": {"i18n_key": "health.pharmacy", "tooltip_key": None, "group_id": 200},
+        "dermatologist": {"i18n_key": "health.physicians.dermatologist", "tooltip_key": None, "group_id": 201},
+        "general_physician": {"i18n_key": "health.physicians.generalPhysicians", "tooltip_key": None, "group_id": 201},
+        "gynaecologist": {"i18n_key": "health.physicians.gynaecologist", "tooltip_key": None, "group_id": 201},
+        "neurologist": {"i18n_key": "health.physicians.neurologist", "tooltip_key": None, "group_id": 201},
+        "ophthalmologist": {"i18n_key": "health.physicians.ophthalmologist", "tooltip_key": None, "group_id": 201},
+        "otolaryngologist": {"i18n_key": "health.physicians.otolaryngologist", "tooltip_key": None, "group_id": 201},
+        "paediatrician": {"i18n_key": "health.physicians.paediatrician", "tooltip_key": None, "group_id": 201},
+        "psychotherapist": {"i18n_key": "health.physicians.psychotherapists", "tooltip_key": None, "group_id": 201},
+        "surgeon": {"i18n_key": "health.physicians.surgeon", "tooltip_key": None, "group_id": 201},
+        "urologist": {"i18n_key": "health.physicians.urologists", "tooltip_key": None, "group_id": 201},
+        "nursery": {"i18n_key": "education.nursery", "tooltip_key": "tooltip.nursery", "group_id": 300},
+        "primary_school": {"i18n_key": "education.primarySchool", "tooltip_key": "tooltip.primarySchool", "group_id": 300},
+        "secondary_school_1": {"i18n_key": "education.secondarySchool1", "tooltip_key": "tooltip.secondarySchool1", "group_id": 300},
+        "secondary_school_2": {"i18n_key": "education.secondarySchool2", "tooltip_key": "tooltip.secondarySchool2", "group_id": 300},
+    }
+    # create facility tables
+    for facility in facilities:
+        table_name = f"facilities_{facility}"
+        table_spec = [
+            Column("GEOMETRY", Geometry("POINT", srid=4326)),
+            Column("WEIGHT", Integer),
+        ]
+        create_table(table_name, table_spec)
+
+    list_table = get_table("facilities_list")
+    if list_table is None:
+        return
+    with Session(ENGINE) as session:
+        stmt = delete(list_table).where()
         session.execute(stmt)
         for facility in facilities:
-            with open(config.FACILITY_DIR + "/" + facility + ".geojson", "r") as file:
+            i18n_key = facilities[facility]["i18n_key"]
+            tooltip_key = facilities[facility]["tooltip_key"]
+            group_id = facilities[facility]["group_id"]
+            table_name = f"facilities_{facility}"
+            stmt = insert(list_table).values(NAME=facility, I18N_KEY=i18n_key, TOOLTIP_KEY=tooltip_key, GROUP_ID=group_id, TABLE_NAME=table_name, GEOMETRY_COLUMN="GEOMETRY", WEIGHT_COLUMN="WEIGHT")
+            session.execute(stmt)
+            facility_table = get_table(table_name)
+            if facility_table is None:
+                raise ValueError("invalid condition.")
+            with open(FACILITY_DIR + "/" + facility + ".geojson", "r") as file:
                 data = json.loads(file.read())
                 vals = []
                 for feature in data["features"]:
                     weight = random.randrange(0, 100, 1)
                     point = Point(feature["geometry"]["coordinates"])
                     vals.append({
-                        "group": facility,
-                        "point": from_shape(point),
-                        "wgs_x": point.x,
-                        "wgs_y": point.y,
-                        "weight": weight,
+                        "GEOMETRY": from_shape(point),
+                        "WEIGHT": weight,
                     })
-                stmt = insert(facil_table).values(vals)
+                stmt = insert(facility_table).values(vals)
                 session.execute(stmt)
         session.commit()
 
@@ -302,4 +346,5 @@ if __name__ == "__main__":
     print("start inserting Population")
     # insertPopulation()
     print("start inserting Facilities")
+    insertFacilityGroups()
     insertFacilities()

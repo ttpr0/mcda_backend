@@ -1,16 +1,16 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, ARRAY, Boolean
 from geoalchemy2 import Geometry
 
 
 USER_TABLE_SPEC = {
     "name": "users",
     "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("email", String(50)),
-        Column("password_salt", String(20)),
-        Column("password_hash", String),
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("EMAIL", String(50)),
+        Column("PASSWORD_SALT", String(20)),
+        Column("PASSWORD_HASH", String),
     ]
 }
 
@@ -41,70 +41,77 @@ POPULATION_TABLE_SPEC = {
     ]
 }
 
-FACILITY_TABLE_SPEC = {
-    "name": "facilities",
+FACILITY_GROUPS_TABLE_SPEC = {
+    "name": "facilities_groups",
     "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("group", String),
-        Column("point", Geometry('POINT'), index=True),
-        Column("wgs_x", Float),
-        Column("wgs_y", Float),
-        Column("weight", Float),
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("NAME", String(50)),
+        Column("I18N_KEY", String(50)),
+        Column("GROUP_ID", Integer, unique=True),
+        Column("UNIQUE", Boolean, default=False),
+        Column("SUPER_GROUP_ID", Integer, nullable=True, default=None),
     ]
 }
 
-PLANNING_AREA_TABLE_SPEC = {
-    "name": "planning_areas",
+FACILITY_LIST_TABLE_SPEC = {
+    "name": "facilities_list",
     "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("name", String(50)),
-        Column("geom", Geometry('POLYGON')),
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("NAME", String(50)),
+        Column("I18N_KEY", String(50)),
+        Column("TOOLTIP_KEY", String(50), nullable=True),
+        Column("GROUP_ID", Integer),
+        Column("TABLE_NAME", String),
+        Column("GEOMETRY_COLUMN", String),
+        Column("WEIGHT_COLUMN", String),
     ]
 }
 
 SUPPLY_LEVEL_TABLE_SPEC = {
     "name": "supply_level_list",
     "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("name", String(50)),
-        Column("TYP_ID", Integer),
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("NAME", String(50)),
+        Column("I18N_KEY", String(50)),
+        Column("VALID", Boolean),
+        Column("SUPPLY_LEVEL_ID", Integer, unique=True),
+    ]
+}
+
+PLANNING_AREA_TABLE_SPEC = {
+    "name": "planning_areas",
+    "columns": [
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("NAME", String(50)),
+        Column("I18N_KEY", String(50)),
+        Column("SUPPLY_LEVEL_IDS", ARRAY(Integer)),
+        Column("GEOMETRY", Geometry('POLYGON', srid=4326)),
     ]
 }
 
 PHYSICIANS_LIST_TABLE_SPEC = {
     "name": "physicians_list",
     "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("name", String(50)),
-        Column("TYP_ID", Integer),
-        Column("DETAIL_ID", Integer),
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("NAME", String(50)),
+        Column("I18N_KEY", String(50)),
+        Column("SUPPLY_LEVEL_IDS", ARRAY(Integer)),
+        Column("PHYSICIAN_ID", Integer, unique=True),
     ]
 }
 
-PHYSICIANS_LOCATION_BASED_TABLE_SPEC = {
-    "name": "physicians_location_based",
+PHYSICIANS_LOCATION_TABLE_SPEC = {
+    "name": "physicians_locations",
     "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("point", Geometry('POINT')),
-        Column("TYP_ID", Integer),
-        Column("DETAIL_ID", Integer),
-        Column("count", Integer),
-    ]
-}
-
-PHYSICIANS_COUNT_BASED_TABLE_SPEC = {
-    "name": "physicians_count_based",
-    "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("point", Geometry('POINT')),
-        Column("TYP_ID", Integer),
-        Column("DETAIL_ID", Integer),
-        Column("VBE_Sum", Float),
-        Column("Pys_Count", Float),
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("GEOMETRY", Geometry('POINT', srid=4326), index=True),
+        Column("PHYSICIAN_ID", Integer),
+        Column("VBE_VOLUME", Float),
+        Column("PHYSICIAN_COUNT", Float),
     ]
 }
 
 TABLE_SPECS = [
-    USER_TABLE_SPEC, POPULATION_TABLE_SPEC, FACILITY_TABLE_SPEC, PLANNING_AREA_TABLE_SPEC, SUPPLY_LEVEL_TABLE_SPEC,
-    PHYSICIANS_LIST_TABLE_SPEC, PHYSICIANS_LOCATION_BASED_TABLE_SPEC, PHYSICIANS_COUNT_BASED_TABLE_SPEC
+    USER_TABLE_SPEC, POPULATION_TABLE_SPEC, FACILITY_GROUPS_TABLE_SPEC, FACILITY_LIST_TABLE_SPEC, PLANNING_AREA_TABLE_SPEC, SUPPLY_LEVEL_TABLE_SPEC,
+    PHYSICIANS_LIST_TABLE_SPEC, PHYSICIANS_LOCATION_TABLE_SPEC
 ]

@@ -13,6 +13,3 @@ API_HOST = "localhost"
 API_PORT = 5000
 
 POPULATION_FILE = "./files/population.csv"
-FACILITY_DIR = "./files/facilities"
-SPATIAL_ACCESS_DIR = "./files/physicians"
-PLANNING_AREAS_DIR = "./files/planning_areas"

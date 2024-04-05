@@ -34,7 +34,7 @@ class SpatialAccessRequest(BaseModel):
 
 @router.post("/grid")
 async def spatial_access_api(req: SpatialAccessRequest):
-    query = get_planning_area(req.supply_level, req.planning_area)
+    query = get_planning_area(req.planning_area)
     if query is None:
         return {"error": "invalid request"}
     buffer_query = query.buffer(0.2)
@@ -49,7 +49,7 @@ async def spatial_access_api(req: SpatialAccessRequest):
         points, utm_points, weights = get_population(buffer_query, req.population_type, indizes)
     t2 = time.time()
     print(f"time to load population: {t2-t1}")
-    facility_points, facility_weights = get_physicians(buffer_query, req.supply_level, req.facility_type, req.facility_capacity)
+    facility_points, facility_weights = get_physicians(buffer_query, req.facility_type, req.facility_capacity)
     ranges, range_factors = get_distance_decay(req.travel_mode, req.decay_type, req.supply_level, req.facility_type)
     travel_mode = req.travel_mode
     if not is_valid_travel_mode(travel_mode):

@@ -6,17 +6,20 @@ from sqlalchemy.orm import Session, declarative_base
 from shapely import Point, Polygon
 
 from . import ENGINE, get_table
+from .planning_areas import _get_supply_level_by_id
 
 
-def get_physicians(query: Polygon, supply_level: str, facility_type: str, facility_cap: str) -> tuple[list[tuple[float, float]], list[float]]:
+def get_physicians(query: Polygon, physician_name: str, capacity_type: str) -> tuple[list[tuple[float, float]], list[float]]:
     locations = []
     weights = []
+
+    query_wkb = from_shape(query, srid=4326)
     
     with Session(ENGINE) as session:
         phys_list = get_table("physicians_list")
         if phys_list is None:
             return (locations, weights)
-        stmt = select(phys_list.c.DETAIL_ID).where(phys_list.c.name == facility_type)
+        stmt = select(phys_list.c.PHYSICIAN_ID).where(phys_list.c.NAME == physician_name)
         rows = session.execute(stmt).fetchall()
         detail_id = None
         for row in rows:
@@ -24,43 +27,40 @@ def get_physicians(query: Polygon, supply_level: str, facility_type: str, facili
         if detail_id is None:
             return (locations, weights)
 
-        if facility_cap == 'facility':
-            phys_loc_based = get_table("physicians_location_based")
-            if phys_loc_based is None:
-                return (locations, weights)
-            stmt = select(phys_loc_based.c.point, phys_loc_based.c.count).where(
-                (phys_loc_based.c.DETAIL_ID == detail_id) & phys_loc_based.c.point.ST_Within(query.wkt)
+        phys_locs = get_table("physicians_locations")
+        if phys_locs is None:
+            return (locations, weights)
+        if capacity_type == 'facility':
+            stmt = select(phys_locs.c.GEOMETRY).where(
+                (phys_locs.c.PHYSICIAN_ID == detail_id) & phys_locs.c.GEOMETRY.ST_Within(query_wkb)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
                 point = to_shape(row[0])
                 locations.append((point.x, point.y))
-                weights.append(row[1])
-        elif facility_cap == 'physicianNumber':
-            phys_count_based = get_table("physicians_count_based")
-            if phys_count_based is None:
-                return (locations, weights)
-            stmt = select(phys_count_based.c.point, phys_count_based.c.VBE_Sum).where(
-                (phys_count_based.c.DETAIL_ID == detail_id) & phys_count_based.c.point.ST_Within(query.wkt)
+                weights.append(1)
+        elif capacity_type == 'physicianNumber':
+            stmt = select(phys_locs.c.GEOMETRY, phys_locs.c.PHYSICIAN_COUNT).where(
+                (phys_locs.c.PHYSICIAN_ID == detail_id) & phys_locs.c.GEOMETRY.ST_Within(query_wkb)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
+                if row[1] == 0:
+                    continue
                 point = to_shape(row[0])
                 locations.append((point.x, point.y))
                 weights.append(row[1])
-        elif facility_cap == 'employmentVolume':
-            phys_count_based = get_table("physicians_count_based")
-            if phys_count_based is None:
-                return (locations, weights)
-            stmt = select(phys_count_based.c.point, phys_count_based.c.Pys_Count).where(
-                (phys_count_based.c.DETAIL_ID == detail_id) & phys_count_based.c.point.ST_Within(query.wkt)
+        elif capacity_type == 'employmentVolume':
+            stmt = select(phys_locs.c.GEOMETRY, phys_locs.c.VBE_VOLUME).where(
+                (phys_locs.c.PHYSICIAN_ID == detail_id) & phys_locs.c.GEOMETRY.ST_Within(query_wkb)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
+                if row[1] == 0:
+                    continue
                 point = to_shape(row[0])
                 locations.append((point.x, point.y))
                 weights.append(row[1])
-    
     return (locations, weights)
 
 PHYSICIAN_GROUPS = {
@@ -102,4 +102,21 @@ PHYSICIAN_GROUPS = {
 }
 
 def get_available_physicians():
-    return PHYSICIAN_GROUPS
+    # return PHYSICIAN_GROUPS
+    physician_groups = {}
+    physician_table = get_table("physicians_list")
+    if physician_table is None:
+        return physician_groups
+    with Session(ENGINE) as session:
+        stmt = select(physician_table.c.NAME, physician_table.c.I18N_KEY, physician_table.c.SUPPLY_LEVEL_IDS).where()
+        rows = session.execute(stmt).fetchall()
+        for row in rows:
+            name = str(row[0])
+            i18n_key = str(row[1])
+            level_ids = list(row[2])
+            for level_id in level_ids:
+                supply_level = _get_supply_level_by_id(session, level_id)
+                if supply_level not in physician_groups:
+                    physician_groups[supply_level] = {}
+                physician_groups[supply_level][name] = {"text": i18n_key}
+    return physician_groups
