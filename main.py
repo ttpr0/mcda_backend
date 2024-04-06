@@ -7,7 +7,6 @@ import logging
 import asyncio
 
 import config
-from models.population import load_population
 from routers.nearest_query import router as nearest_router
 from routers.spatial_access import router as spatial_access_router
 from routers.spatial_analysis import router as spatial_analysis_router
@@ -95,7 +94,6 @@ if __name__ == '__main__':
     logger.addHandler(handler)
 
     logger.info("Start loading population data...")
-    load_population(config.POPULATION_FILE)
     logger.info("Done loading population data.")
     logger.info("AccessibilityService ready!")
     # uvicorn.run("main:app", host=config.API_HOST, port=config.API_PORT, reload=True)

@@ -9,7 +9,7 @@ import numpy as np
 
 import config
 
-from models.population import get_population, convert_population_keys
+from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
@@ -43,10 +43,7 @@ async def decision_support_api(req: MultiCriteriaRequest):
     if req.population_indizes is None or req.population_type is None:
         population_locations, utm_points, population_weights = get_population(query)
     else:
-        indizes = convert_population_keys(req.population_type, req.population_indizes)
-        if indizes is None:
-            return {"error": "invalid population indizes"}
-        population_locations, utm_points, population_weights = get_population(query, req.population_type, indizes)
+        population_locations, utm_points, population_weights = get_population(query, req.population_type, req.population_indizes)
 
     infrastructures = {}
     for name, param in req.infrastructures.items():

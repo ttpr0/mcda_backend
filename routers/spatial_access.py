@@ -9,7 +9,7 @@ import time
 import config
 
 from oas_api.fca import calcFCA
-from models.population import get_population, convert_population_keys
+from models.population import get_population
 from models.physicians import get_physicians
 from models.planning_areas import get_planning_area
 from models.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
@@ -43,10 +43,7 @@ async def spatial_access_api(req: SpatialAccessRequest):
     if req.population_indizes is None:
         points, utm_points, weights = get_population(buffer_query)
     else:
-        indizes = convert_population_keys(req.population_type, req.population_indizes)
-        if indizes is None:
-            return {"error": "invalid population indizes"}
-        points, utm_points, weights = get_population(buffer_query, req.population_type, indizes)
+        points, utm_points, weights = get_population(buffer_query, req.population_type, req.population_indizes)
     t2 = time.time()
     print(f"time to load population: {t2-t1}")
     facility_points, facility_weights = get_physicians(buffer_query, req.facility_type, req.facility_capacity)

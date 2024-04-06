@@ -11,5 +11,3 @@ GEOSERVER_URL = "http://localhost:8080"
 
 API_HOST = "localhost"
 API_PORT = 5000
-
-POPULATION_FILE = "./files/population.csv"
