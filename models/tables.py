@@ -14,30 +14,14 @@ USER_TABLE_SPEC = {
     ]
 }
 
-POPULATION_TABLE_SPEC = {
-    "name": "population",
+POPULATION_LIST_TABLE_SPEC = {
+    "name": "population_list",
     "columns": [
-        Column("pid", Integer, primary_key=True, autoincrement=True),
-        Column("point", Geometry('POINT'), index=True),
-        Column("wgs_x", Float),
-        Column("wgs_y", Float),
-        Column("utm_x", Float),
-        Column("utm_y", Float),
-
-        Column("ew_gesamt", Integer),
-        Column("std_00_09", Integer),
-        Column("std_10_19", Integer),
-        Column("std_20_39", Integer),
-        Column("std_40_59", Integer),
-        Column("std_60_79", Integer),
-        Column("std_80x", Integer),
-        Column("ksc_00_02", Integer),
-        Column("ksc_03_05", Integer),
-        Column("ksc_06_09", Integer),
-        Column("ksc_10_14", Integer),
-        Column("ksc_15_17", Integer),
-        Column("ksc_18_19", Integer),
-        Column("ksc_20x", Integer),
+        Column("PID", Integer, primary_key=True, autoincrement=True),
+        Column("NAME", String(50)),
+        Column("I18N_KEY", String(50)),
+        Column("TABLE_NAME", String),
+        Column("META_TABLE_NAME", String),
     ]
 }
 
@@ -112,6 +96,6 @@ PHYSICIANS_LOCATION_TABLE_SPEC = {
 }
 
 TABLE_SPECS = [
-    USER_TABLE_SPEC, POPULATION_TABLE_SPEC, FACILITY_GROUPS_TABLE_SPEC, FACILITY_LIST_TABLE_SPEC, PLANNING_AREA_TABLE_SPEC, SUPPLY_LEVEL_TABLE_SPEC,
+    USER_TABLE_SPEC, POPULATION_LIST_TABLE_SPEC, FACILITY_GROUPS_TABLE_SPEC, FACILITY_LIST_TABLE_SPEC, PLANNING_AREA_TABLE_SPEC, SUPPLY_LEVEL_TABLE_SPEC,
     PHYSICIANS_LIST_TABLE_SPEC, PHYSICIANS_LOCATION_TABLE_SPEC
 ]
