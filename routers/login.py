@@ -34,7 +34,7 @@ async def login_api(req: LoginRequest):
             return {
                 "error": "internal server error",
             }
-        stmt = select(user_table.c.PASSWORD_SALT, user_table.c.PASSWORD_HASH).where(user_table.c.EMAIL == req.email)
+        stmt = select(user_table.c.password_salt, user_table.c.password_hash).where(user_table.c.email == req.email)
         rows = session.execute(stmt).fetchall()
         for row in rows:
             salt = row[0]

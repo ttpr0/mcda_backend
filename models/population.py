@@ -25,7 +25,7 @@ def get_population(query: Polygon, typ: str = 'standard_all', age_groups: list[s
         if typ == "standard_all":
             name = "standard"
         # get population tables
-        stmt = select(list_table.c.TABLE_NAME, list_table.c.META_TABLE_NAME).where(list_table.c.NAME == name)
+        stmt = select(list_table.c.table_name, list_table.c.meta_table_name).where(list_table.c.name == name)
         rows = session.execute(stmt).fetchall()
         table_name = None
         meta_table_name = None
@@ -40,7 +40,7 @@ def get_population(query: Polygon, typ: str = 'standard_all', age_groups: list[s
             meta_table = get_table(meta_table_name)
             if meta_table is None:
                 return locations, utm_locations, weights
-            stmt = select(meta_table.c.AGE_GROUP_KEY).where()
+            stmt = select(meta_table.c.age_group_key).where()
             rows = session.execute(stmt).fetchall()
             keys = []
             for row in rows:
@@ -54,7 +54,7 @@ def get_population(query: Polygon, typ: str = 'standard_all', age_groups: list[s
         age_sum = getattr(pop_table.c, keys[0])
         for key in keys[1:]:
             age_sum = age_sum + getattr(pop_table.c, key)
-        stmt = select(pop_table.c.X, pop_table.c.Y, pop_table.c.UTM_X, pop_table.c.UTM_Y, age_sum).where(pop_table.c.GEOMETRY.ST_Within(query_wkb))
+        stmt = select(pop_table.c.x, pop_table.c.y, pop_table.c.utm_x, pop_table.c.utm_y, age_sum).where(pop_table.c.geometry.ST_Within(query_wkb))
         rows = session.execute(stmt).fetchall()
         for row in rows:
             locations.append((row[0], row[1]))
@@ -96,7 +96,7 @@ def get_available_population():
     if list_table is None:
         return populations
     with Session(ENGINE) as session:
-        stmt = select(list_table.c.NAME, list_table.c.I18N_KEY, list_table.c.META_TABLE_NAME).where()
+        stmt = select(list_table.c.name, list_table.c.i18n_key, list_table.c.meta_table_name).where()
         rows = session.execute(stmt).fetchall()
         for row in rows:
             name = str(row[0])
@@ -108,7 +108,7 @@ def get_available_population():
             meta_table = get_table(meta_table_name)
             if meta_table is None:
                 continue
-            stmt = select(meta_table.c.AGE_GROUP_KEY, meta_table.c.FROM, meta_table.c.TO).where()
+            stmt = select(meta_table.c.age_group_key, meta_table.c.from_, meta_table.c.to_).where()
             rows = session.execute(stmt).fetchall()
             ages = {}
             for row in rows:

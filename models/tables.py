@@ -7,91 +7,91 @@ from geoalchemy2 import Geometry
 USER_TABLE_SPEC = {
     "name": "users",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("EMAIL", String(50)),
-        Column("PASSWORD_SALT", String(20)),
-        Column("PASSWORD_HASH", String),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("email", String(50)),
+        Column("password_salt", String(20)),
+        Column("password_hash", String),
     ]
 }
 
 POPULATION_LIST_TABLE_SPEC = {
     "name": "population_list",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("NAME", String(50)),
-        Column("I18N_KEY", String(50)),
-        Column("TABLE_NAME", String),
-        Column("META_TABLE_NAME", String),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("name", String(50)),
+        Column("i18n_key", String(50)),
+        Column("table_name", String),
+        Column("meta_table_name", String),
     ]
 }
 
 FACILITY_GROUPS_TABLE_SPEC = {
     "name": "facilities_groups",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("NAME", String(50)),
-        Column("I18N_KEY", String(50)),
-        Column("GROUP_ID", Integer, unique=True),
-        Column("UNIQUE", Boolean, default=False),
-        Column("SUPER_GROUP_ID", Integer, nullable=True, default=None),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("name", String(50)),
+        Column("i18n_key", String(50)),
+        Column("group_id", Integer, unique=True),
+        Column("unique", Boolean, default=False),
+        Column("super_group_id", Integer, nullable=True, default=None),
     ]
 }
 
 FACILITY_LIST_TABLE_SPEC = {
     "name": "facilities_list",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("NAME", String(50)),
-        Column("I18N_KEY", String(50)),
-        Column("TOOLTIP_KEY", String(50), nullable=True),
-        Column("GROUP_ID", Integer),
-        Column("TABLE_NAME", String),
-        Column("GEOMETRY_COLUMN", String),
-        Column("WEIGHT_COLUMN", String),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("name", String(50)),
+        Column("i18n_key", String(50)),
+        Column("tooltip_key", String(50), nullable=True),
+        Column("group_id", Integer),
+        Column("table_name", String),
+        Column("geometry_column", String),
+        Column("weight_column", String),
     ]
 }
 
 SUPPLY_LEVEL_TABLE_SPEC = {
     "name": "supply_level_list",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("NAME", String(50)),
-        Column("I18N_KEY", String(50)),
-        Column("VALID", Boolean),
-        Column("SUPPLY_LEVEL_ID", Integer, unique=True),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("name", String(50)),
+        Column("i18n_key", String(50)),
+        Column("valid", Boolean),
+        Column("supply_level_id", Integer, unique=True),
     ]
 }
 
 PLANNING_AREA_TABLE_SPEC = {
     "name": "planning_areas",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("NAME", String(50)),
-        Column("I18N_KEY", String(50)),
-        Column("SUPPLY_LEVEL_IDS", ARRAY(Integer)),
-        Column("GEOMETRY", Geometry('POLYGON', srid=4326)),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("name", String(50)),
+        Column("i18n_key", String(50)),
+        Column("supply_level_ids", ARRAY(Integer)),
+        Column("geometry", Geometry('POLYGON', srid=4326)),
     ]
 }
 
 PHYSICIANS_LIST_TABLE_SPEC = {
     "name": "physicians_list",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("NAME", String(50)),
-        Column("I18N_KEY", String(50)),
-        Column("SUPPLY_LEVEL_IDS", ARRAY(Integer)),
-        Column("PHYSICIAN_ID", Integer, unique=True),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("name", String(50)),
+        Column("i18n_key", String(50)),
+        Column("supply_level_ids", ARRAY(Integer)),
+        Column("physician_id", Integer, unique=True),
     ]
 }
 
 PHYSICIANS_LOCATION_TABLE_SPEC = {
     "name": "physicians_locations",
     "columns": [
-        Column("PID", Integer, primary_key=True, autoincrement=True),
-        Column("GEOMETRY", Geometry('POINT', srid=4326), index=True),
-        Column("PHYSICIAN_ID", Integer),
-        Column("VBE_VOLUME", Float),
-        Column("PHYSICIAN_COUNT", Float),
+        Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("geometry", Geometry('POINT', srid=4326), index=True),
+        Column("physician_id", Integer),
+        Column("vbe_volume", Float),
+        Column("physician_count", Float),
     ]
 }
 

@@ -13,7 +13,7 @@ def get_planning_area(planning_area: str) -> Polygon | None:
     if area_table is None:
         return None
     with Session(ENGINE) as session:
-        stmt = select(area_table.c.GEOMETRY).where(area_table.c.NAME == planning_area)
+        stmt = select(area_table.c.geometry).where(area_table.c.name == planning_area)
         rows = session.execute(stmt).fetchall()
         for row in rows:
             return to_shape(row[0])
@@ -26,7 +26,7 @@ def _get_supply_level_by_id(session: Session, supply_level_id: int) -> str | Non
     level_table = get_table("supply_level_list")
     if level_table is None:
         return None
-    stmt = select(level_table.c.NAME).where(level_table.c.SUPPLY_LEVEL_ID == supply_level_id)
+    stmt = select(level_table.c.name).where(level_table.c.supply_level_id == supply_level_id)
     rows = session.execute(stmt).fetchall()
     for row in rows:
         return str(row[0])
@@ -46,7 +46,7 @@ def get_available_supply_levels():
     if level_table is None:
         return supply_levels
     with Session(ENGINE) as session:
-        stmt = select(level_table.c.NAME, level_table.c.I18N_KEY, level_table.c.VALID).where()
+        stmt = select(level_table.c.name, level_table.c.i18n_key, level_table.c.valid).where()
         rows = session.execute(stmt).fetchall()
         for row in rows:
             name = str(row[0])
@@ -89,7 +89,7 @@ def get_available_planning_areas():
     if area_table is None:
         return planning_areas
     with Session(ENGINE) as session:
-        stmt = select(area_table.c.NAME, area_table.c.I18N_KEY, area_table.c.SUPPLY_LEVEL_IDS).where()
+        stmt = select(area_table.c.name, area_table.c.i18n_key, area_table.c.supply_level_ids).where()
         rows = session.execute(stmt).fetchall()
         for row in rows:
             name = str(row[0])

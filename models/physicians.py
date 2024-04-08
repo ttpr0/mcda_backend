@@ -19,7 +19,7 @@ def get_physicians(query: Polygon, physician_name: str, capacity_type: str) -> t
         phys_list = get_table("physicians_list")
         if phys_list is None:
             return (locations, weights)
-        stmt = select(phys_list.c.PHYSICIAN_ID).where(phys_list.c.NAME == physician_name)
+        stmt = select(phys_list.c.physician_id).where(phys_list.c.name == physician_name)
         rows = session.execute(stmt).fetchall()
         detail_id = None
         for row in rows:
@@ -31,8 +31,8 @@ def get_physicians(query: Polygon, physician_name: str, capacity_type: str) -> t
         if phys_locs is None:
             return (locations, weights)
         if capacity_type == 'facility':
-            stmt = select(phys_locs.c.GEOMETRY).where(
-                (phys_locs.c.PHYSICIAN_ID == detail_id) & phys_locs.c.GEOMETRY.ST_Within(query_wkb)
+            stmt = select(phys_locs.c.geometry).where(
+                (phys_locs.c.physician_id == detail_id) & phys_locs.c.geometry.ST_Within(query_wkb)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
@@ -40,8 +40,8 @@ def get_physicians(query: Polygon, physician_name: str, capacity_type: str) -> t
                 locations.append((point.x, point.y))
                 weights.append(1)
         elif capacity_type == 'physicianNumber':
-            stmt = select(phys_locs.c.GEOMETRY, phys_locs.c.PHYSICIAN_COUNT).where(
-                (phys_locs.c.PHYSICIAN_ID == detail_id) & phys_locs.c.GEOMETRY.ST_Within(query_wkb)
+            stmt = select(phys_locs.c.geometry, phys_locs.c.physician_count).where(
+                (phys_locs.c.physician_id == detail_id) & phys_locs.c.geometry.ST_Within(query_wkb)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
@@ -51,8 +51,8 @@ def get_physicians(query: Polygon, physician_name: str, capacity_type: str) -> t
                 locations.append((point.x, point.y))
                 weights.append(row[1])
         elif capacity_type == 'employmentVolume':
-            stmt = select(phys_locs.c.GEOMETRY, phys_locs.c.VBE_VOLUME).where(
-                (phys_locs.c.PHYSICIAN_ID == detail_id) & phys_locs.c.GEOMETRY.ST_Within(query_wkb)
+            stmt = select(phys_locs.c.geometry, phys_locs.c.vbe_volume).where(
+                (phys_locs.c.physician_id == detail_id) & phys_locs.c.geometry.ST_Within(query_wkb)
             )
             rows = session.execute(stmt).fetchall()
             for row in rows:
@@ -108,7 +108,7 @@ def get_available_physicians():
     if physician_table is None:
         return physician_groups
     with Session(ENGINE) as session:
-        stmt = select(physician_table.c.NAME, physician_table.c.I18N_KEY, physician_table.c.SUPPLY_LEVEL_IDS).where()
+        stmt = select(physician_table.c.name, physician_table.c.i18n_key, physician_table.c.supply_level_ids).where()
         rows = session.execute(stmt).fetchall()
         for row in rows:
             name = str(row[0])

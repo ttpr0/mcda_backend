@@ -18,7 +18,7 @@ def get_facility(facility_name: str, envelop: Polygon) -> tuple[list[tuple[float
         list_table = get_table("facilities_list")
         if list_table is None:
             return (locations, weights)
-        stmt = select(list_table.c.TABLE_NAME, list_table.c.GEOMETRY_COLUMN, list_table.c.WEIGHT_COLUMN).where(list_table.c.NAME == facility_name)
+        stmt = select(list_table.c.table_name, list_table.c.geometry_column, list_table.c.weight_column).where(list_table.c.name == facility_name)
         rows = session.execute(stmt).fetchall()
         table_name = None
         geometry_column = None
@@ -52,7 +52,7 @@ def _get_facility_group_by_id(session: Session, group_id: int) -> tuple[str, str
     group_table = get_table("facilities_groups")
     if group_table is None:
         return None
-    stmt = select(group_table.c.NAME, group_table.c.I18N_KEY, group_table.c.SUPER_GROUP_ID).where(group_table.c.GROUP_ID == group_id)
+    stmt = select(group_table.c.name, group_table.c.i18n_key, group_table.c.super_group_id).where(group_table.c.group_id == group_id)
     rows = session.execute(stmt).fetchall()
     for row in rows:
         return str(row[0]), str(row[1]), row[2]
@@ -105,7 +105,7 @@ def get_available_facilities():
     if facilities_table is None:
         return facilities
     with Session(ENGINE) as session:
-        stmt = select(facilities_table.c.NAME, facilities_table.c.I18N_KEY, facilities_table.c.TOOLTIP_KEY, facilities_table.c.GROUP_ID).where()
+        stmt = select(facilities_table.c.name, facilities_table.c.i18n_key, facilities_table.c.tooltip_key, facilities_table.c.group_id).where()
         rows = session.execute(stmt).fetchall()
         for row in rows:
             name = str(row[0])

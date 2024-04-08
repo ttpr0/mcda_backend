@@ -36,7 +36,7 @@ def insertAdminUser() -> None:
             # hash password+salt
             password_bytes = ''.join([password, salt]).encode()
             h = hashlib.sha256(password_bytes).hexdigest()
-            stmt = insert(user_table).values(EMAIL=email, PASSWORD_SALT=salt, PASSWORD_HASH=h)
+            stmt = insert(user_table).values(email=email, password_salt=salt, password_hash=h)
             session.execute(stmt)
         session.commit()
 
@@ -73,7 +73,7 @@ def insertPlanningAreas() -> None:
                         continue
                     i18n_key = mapping[name]["i18n_key"]
                     level_ids = mapping[name]["supply_levels"]
-                    stmt = insert(area_table).values(NAME=name, I18N_KEY=i18n_key, SUPPLY_LEVEL_IDS=level_ids, GEOMETRY=from_shape(polygon))
+                    stmt = insert(area_table).values(name=name, i18n_key=i18n_key, supply_level_ids=level_ids, geometry=from_shape(polygon))
                     session.execute(stmt)
         session.commit()
 
@@ -95,10 +95,10 @@ def insertPhysicians() -> None:
                 vbe_sum = float(props["VBE_Sum"])
                 phys_count = float(props["Pys_count"])
                 vals.append({
-                    "GEOMETRY": from_shape(point),
-                    "PHYSICIAN_ID": physician_id,
-                    "VBE_VOLUME": vbe_sum,
-                    "PHYSICIAN_COUNT": phys_count,
+                    "geometry": from_shape(point),
+                    "physician_id": physician_id,
+                    "vbe_volume": vbe_sum,
+                    "physician_count": phys_count,
                 })
             stmt = insert(loc_table).values(vals)
             session.execute(stmt)
@@ -118,7 +118,7 @@ def insertSupplyLevels() -> None:
         stmt = delete(sup_table).where()
         session.execute(stmt)
         for sl in supply_levels:
-            stmt = insert(sup_table).values(NAME=sl[0], I18N_KEY=sl[2], VALID=sl[3], SUPPLY_LEVEL_ID=sl[1])
+            stmt = insert(sup_table).values(name=sl[0], i18n_key=sl[2], valid=sl[3], supply_level_id=sl[1])
             session.execute(stmt)
         session.commit()
 
@@ -146,7 +146,7 @@ def insertPhysiciansList() -> None:
         stmt = delete(phys_table).where()
         session.execute(stmt)
         for sl in physicians:
-            stmt = insert(phys_table).values(NAME=sl[0], I18N_KEY=sl[1], SUPPLY_LEVEL_IDS=sl[2], PHYSICIAN_ID=sl[3])
+            stmt = insert(phys_table).values(name=sl[0], i18n_key=sl[1], supply_level_ids=sl[2], physician_id=sl[3])
             session.execute(stmt)
         session.commit()
 
@@ -188,7 +188,7 @@ def insertPopulation() -> None:
         for group in populations:
             meta_table_name = f"population_{group}_meta"
             table_name = f"population_{group}"
-            stmt = insert(list_table).values(NAME=group, I18N_KEY=populations[group]["i18n_key"], META_TABLE_NAME=meta_table_name, TABLE_NAME=table_name)
+            stmt = insert(list_table).values(name=group, i18n_key=populations[group]["i18n_key"], meta_table_name=meta_table_name, table_name=table_name)
             session.execute(stmt)
         session.commit()
 
@@ -197,18 +197,18 @@ def insertPopulation() -> None:
     for group in populations:
         meta_table_name = f"population_{group}_meta"
         meta_table_spec = [
-            Column("AGE_GROUP_KEY", String),
-            Column("FROM", Integer),
-            Column("TO", Integer),
+            Column("age_group_key", String),
+            Column("from_", Integer),
+            Column("to_", Integer),
         ]
         create_table(meta_table_name, meta_table_spec)
         table_name = f"population_{group}"
         table_spec = [
-            Column("GEOMETRY", Geometry("POINT", srid=4326)),
-            Column("X", Float),
-            Column("Y", Float),
-            Column("UTM_X", Float),
-            Column("UTM_Y", Float),
+            Column("geometry", Geometry("POINT", srid=4326)),
+            Column("x", Float),
+            Column("y", Float),
+            Column("utm_x", Float),
+            Column("utm_y", Float),
             *[Column(f"{key}", Integer) for key in populations[group]["items"]],
         ]
         create_table(table_name, table_spec)
@@ -229,7 +229,7 @@ def insertPopulation() -> None:
                     ma = sl[1]
                 else:
                     ma = -1
-                stmt = insert(meta_table).values(AGE_GROUP_KEY=age_group, FROM=mi, TO=ma)
+                stmt = insert(meta_table).values(age_group_key=age_group, from_=mi, to_=ma)
                 session.execute(stmt)
             session.commit()
 
@@ -333,11 +333,11 @@ def insertPopulation() -> None:
             session.execute(stmt)
             for attr in population_data:
                 val = {
-                    "GEOMETRY": from_shape(Point(attr["wgs_x"], attr["wgs_y"])),
-                    "X": attr["wgs_x"],
-                    "Y": attr["wgs_y"],
-                    "UTM_X": attr["utm_x"],
-                    "UTM_Y": attr["utm_y"],
+                    "geometry": from_shape(Point(attr["wgs_x"], attr["wgs_y"])),
+                    "x": attr["wgs_x"],
+                    "y": attr["wgs_y"],
+                    "utm_x": attr["utm_x"],
+                    "utm_y": attr["utm_y"],
                 }
                 for field in populations[group]["items"]:
                     val[field] = attr[field]
@@ -359,7 +359,7 @@ def insertFacilityGroups() -> None:
         stmt = delete(group_table).where()
         session.execute(stmt)
         for sl in groups:
-            stmt = insert(group_table).values(NAME=sl[0], I18N_KEY=sl[1], GROUP_ID=sl[2], SUPER_GROUP_ID=sl[3])
+            stmt = insert(group_table).values(name=sl[0], i18n_key=sl[1], group_id=sl[2], super_group_id=sl[3])
             session.execute(stmt)
         session.commit()
 
@@ -389,8 +389,8 @@ def insertFacilities():
     for facility in facilities:
         table_name = f"facilities_{facility}"
         table_spec = [
-            Column("GEOMETRY", Geometry("POINT", srid=4326)),
-            Column("WEIGHT", Integer),
+            Column("geometry", Geometry("POINT", srid=4326)),
+            Column("weight", Integer),
         ]
         create_table(table_name, table_spec)
 
@@ -405,7 +405,7 @@ def insertFacilities():
             tooltip_key = facilities[facility]["tooltip_key"]
             group_id = facilities[facility]["group_id"]
             table_name = f"facilities_{facility}"
-            stmt = insert(list_table).values(NAME=facility, I18N_KEY=i18n_key, TOOLTIP_KEY=tooltip_key, GROUP_ID=group_id, TABLE_NAME=table_name, GEOMETRY_COLUMN="GEOMETRY", WEIGHT_COLUMN="WEIGHT")
+            stmt = insert(list_table).values(name=facility, i18n_key=i18n_key, tooltip_key=tooltip_key, group_id=group_id, table_name=table_name, geometry_column="geometry", weight_column="weight")
             session.execute(stmt)
             facility_table = get_table(table_name)
             if facility_table is None:
@@ -417,8 +417,8 @@ def insertFacilities():
                     weight = random.randrange(0, 100, 1)
                     point = Point(feature["geometry"]["coordinates"])
                     vals.append({
-                        "GEOMETRY": from_shape(point),
-                        "WEIGHT": weight,
+                        "geometry": from_shape(point),
+                        "weight": weight,
                     })
                 stmt = insert(facility_table).values(vals)
                 session.execute(stmt)
@@ -437,7 +437,7 @@ if __name__ == "__main__":
     print("start inserting Admin User")
     insertAdminUser()
     print("start inserting Population")
-    # insertPopulation()
+    insertPopulation()
     print("start inserting Facilities")
     insertFacilityGroups()
     insertFacilities()
