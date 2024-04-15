@@ -20,15 +20,17 @@ PLANNING_AREAS_DIR = "./files/planning_areas"
 
 def insertAdminUser() -> None:
     users = [
-        ("dvan@admin.org", "password")
+        ("admin", "dvan@admin.org", "admin", "password")
     ]
     with Session(ENGINE) as session:
         user_table = get_table("users")
         if user_table is None:
             return
         for user in users:
-            email = user[0]
-            password = user[1]
+            name = user[0]
+            email = user[1]
+            group = user[2]
+            password = user[3]
             # generare password salt
             letters = string.ascii_lowercase
             salt = ''.join(random.choice(letters) for i in range(10))
@@ -36,7 +38,7 @@ def insertAdminUser() -> None:
             # hash password+salt
             password_bytes = ''.join([password, salt]).encode()
             h = hashlib.sha256(password_bytes).hexdigest()
-            stmt = insert(user_table).values(email=email, password_salt=salt, password_hash=h)
+            stmt = insert(user_table).values(username=name ,email=email, group=group, password_salt=salt, password_hash=h)
             session.execute(stmt)
         session.commit()
 

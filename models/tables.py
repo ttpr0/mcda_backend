@@ -8,7 +8,9 @@ USER_TABLE_SPEC = {
     "name": "users",
     "columns": [
         Column("pid", Integer, primary_key=True, autoincrement=True),
+        Column("username", String(50), unique=True),
         Column("email", String(50)),
+        Column("group", String(10)),
         Column("password_salt", String(20)),
         Column("password_hash", String),
     ]
