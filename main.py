@@ -4,17 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import logging
-import asyncio
 
 import config
 from routers.nearest_query import router as nearest_router
 from routers.spatial_access import router as spatial_access_router
 from routers.spatial_analysis import router as spatial_analysis_router
-from routers.login import router as login_router
 from routers.app_state import router as app_state_router
 from routers.others import router as others_router
 from routers.decision_support import router as decision_support_router
-from state import USER_SESSIONS
 
 app = FastAPI()
 
@@ -26,24 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# @app.middleware("http")
-# async def check_session_key(request: Request, call_next):
-#     if request.url.path == "/v1/util/login":
-#         response = await call_next(request)
-#         return response
-#     if "Session-Key" not in request.headers:
-#         return JSONResponse(content={
-#             "error": "missing session_key header"
-#         }, status_code=401)
-#     key = request.headers["Session-Key"]
-#     if key not in USER_SESSIONS:
-#         return JSONResponse(content={
-#             "error": "invalid session_key header"
-#         }, status_code=401)
-#     response = await call_next(request)
-#     return response
-
-
 app.include_router(nearest_router, prefix="/v1/accessibility/nearest_query")
 
 app.include_router(spatial_access_router, prefix="/v1/spatial_access")
@@ -51,8 +30,6 @@ app.include_router(spatial_access_router, prefix="/v1/spatial_access")
 app.include_router(decision_support_router, prefix="/v1/decision_support")
 
 app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
-
-app.include_router(login_router, prefix="/v1/util")
 
 app.include_router(app_state_router, prefix="/v1/state")
 

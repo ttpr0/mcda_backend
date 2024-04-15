@@ -1,12 +1,11 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from shapely import Point, Polygon, contains_xy
+from shapely import contains_xy
 import asyncio
 import time
-
-import config
+from typing import Annotated
 
 from oas_api.fca import calcFCA
 from models.population import get_population
@@ -14,6 +13,7 @@ from models.physicians import get_physicians
 from models.planning_areas import get_planning_area
 from models.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
 from helpers.util import get_extent
+from helpers.depends import get_current_user, User
 
 
 router = APIRouter()
@@ -33,7 +33,7 @@ class SpatialAccessRequest(BaseModel):
     decay_type: str
 
 @router.post("/grid")
-async def spatial_access_api(req: SpatialAccessRequest):
+async def spatial_access_api(req: SpatialAccessRequest, user: Annotated[User, Depends(get_current_user)]):
     query = get_planning_area(req.planning_area)
     if query is None:
         return {"error": "invalid request"}

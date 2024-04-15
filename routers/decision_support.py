@@ -1,18 +1,15 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from shapely import Point, Polygon, contains_xy
-from typing import Any
+from shapely import Polygon
+from typing import Annotated
 import asyncio
-import numpy as np
-
-import config
 
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
-from helpers.responses import GridFeature
+from helpers.depends import get_current_user, User
 from oas_api.multi_criteria import calcMultiCriteria, Infrastructure, calcMultiCriteria2
 
 
@@ -35,7 +32,7 @@ class MultiCriteriaRequest(BaseModel):
 
 
 @router.post("/grid")
-async def decision_support_api(req: MultiCriteriaRequest):
+async def decision_support_api(req: MultiCriteriaRequest, user: Annotated[User, Depends(get_current_user)]):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))

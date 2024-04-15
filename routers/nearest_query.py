@@ -1,19 +1,17 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from shapely import Point, Polygon
-import requests
-import json
+from shapely import Polygon
 import asyncio
 import numpy as np
-import random
 import uuid
+from typing import Annotated
 
-import config
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
+from helpers.depends import get_current_user, User
 from oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2
 
 
@@ -100,7 +98,7 @@ class NearestQueryStatisticsRequest(BaseModel):
     envelop: tuple[float, float, float, float] | None
 
 @router.post("")
-async def getNearestQuery(req: NearestQueryRequest):
+async def getNearestQuery(req: NearestQueryRequest, user: Annotated[User, Depends(get_current_user)]):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
@@ -117,7 +115,7 @@ async def getNearestQuery(req: NearestQueryRequest):
     }
 
 @router.post("/result")
-async def computeResult(req: NearestQueryResultRequest):
+async def computeResult(req: NearestQueryResultRequest, user: Annotated[User, Depends(get_current_user)]):
     session = sessions[req.id]
 
     features: list[GridFeature] = []
@@ -138,7 +136,7 @@ async def computeResult(req: NearestQueryResultRequest):
     return {"features": features, "crs": crs, "extend": extend, "size": size}
 
 @router.post("/compute")
-async def computeValue(req: NearestQueryComputedRequest):
+async def computeValue(req: NearestQueryComputedRequest, user: Annotated[User, Depends(get_current_user)]):
     session = sessions[req.id]
 
     if session.compute_type == req.compute_type and session.result is not None:
@@ -159,7 +157,7 @@ def in_extent(point: tuple[float, float], envelop: tuple[float, float, float, fl
     return point[0] > envelop[0] and point[0] < envelop[2] and point[1] > envelop[1] and point[1] < envelop[3]
 
 @router.post("/statistics")
-async def computeStatistics(req: NearestQueryStatisticsRequest):
+async def computeStatistics(req: NearestQueryStatisticsRequest, user: Annotated[User, Depends(get_current_user)]):
     envelop = req.envelop
     session = sessions[req.id]
 

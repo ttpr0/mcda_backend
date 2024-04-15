@@ -1,6 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from fastapi import APIRouter, Request, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Request, HTTPException, Depends
 from pydantic import BaseModel
 
 from models.travel_modes import get_available_travelmodes, get_available_decays, get_default_timezones
@@ -8,11 +10,12 @@ from models.population import get_available_population
 from models.facilities import get_available_facilities
 from models.physicians import get_available_physicians
 from models.planning_areas import get_available_supply_levels, get_available_planning_areas
+from helpers.depends import get_current_user, User
 
 router = APIRouter()
 
 @router.get("/facilities")
-async def get_facilities():
+async def get_facilities(user: Annotated[User, Depends(get_current_user)]):
     """Returns all available facilities:
     ```json
     {
@@ -37,7 +40,7 @@ async def get_facilities():
     return get_available_facilities()
 
 @router.get("/population")
-async def get_population():
+async def get_population(user: Annotated[User, Depends(get_current_user)]):
     """Returns all available population parameters:
     ```json
     {
@@ -59,7 +62,7 @@ async def get_population():
     return get_available_population()
 
 @router.get("/travel_modes")
-async def get_travel_modes():
+async def get_travel_modes(user: Annotated[User, Depends(get_current_user)]):
     """Returns all available travel modes as dictionary:
     ```json
     {
@@ -70,7 +73,7 @@ async def get_travel_modes():
     return get_available_travelmodes()
 
 @router.get("/distance_decays")
-async def get_distance_decays():
+async def get_distance_decays(user: Annotated[User, Depends(get_current_user)]):
     """Returns all available distance-decays
     ```json
     {
@@ -84,7 +87,7 @@ async def get_distance_decays():
     return get_available_decays()
 
 @router.post("/time_zones")
-async def get_time_zones(req: Request):
+async def get_time_zones(req: Request, user: Annotated[User, Depends(get_current_user)]):
     """Returns time-zones for all requested facilities
 
     Time-zones are four integers defining the travel-time thresholds for very-good, good, sufficient and above deficient supply.
@@ -113,7 +116,7 @@ async def get_time_zones(req: Request):
     return get_default_timezones(data["facilities"])
 
 @router.get("/supply_levels")
-async def get_supply_levels():
+async def get_supply_levels(user: Annotated[User, Depends(get_current_user)]):
     """Returns all available supply-levels
     ```json
     {
@@ -126,7 +129,7 @@ async def get_supply_levels():
     return get_available_supply_levels()
 
 @router.get("/planning_areas")
-async def get_planning_areas():
+async def get_planning_areas(user: Annotated[User, Depends(get_current_user)]):
     """Returns all available planning-areas per supply-level
     ```json
     {
@@ -141,7 +144,7 @@ async def get_planning_areas():
     return get_available_planning_areas()
 
 @router.get("/physicians")
-async def get_physicians():
+async def get_physicians(user: Annotated[User, Depends(get_current_user)]):
     """Returns all available physicians per supply-level
     ```json
     {

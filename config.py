@@ -7,7 +7,8 @@ POSTGIS_USER = ""
 POSTGIS_PASSWORD = ""
 POSTGIS_DB = ""
 
-GEOSERVER_URL = "http://localhost:8080"
-
 API_HOST = "localhost"
 API_PORT = 5000
+
+JWT_KEY = "secret"
+JWT_ALGORITHM = "HS256"
