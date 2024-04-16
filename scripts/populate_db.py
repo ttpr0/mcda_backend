@@ -1,6 +1,6 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from shapely import Point, Polygon, contains_xy, from_wkb
+from shapely import Point, Polygon, MultiPolygon, contains_xy, from_wkb
 import json
 import os
 import string
@@ -70,7 +70,13 @@ def insertPlanningAreas() -> None:
                 for feature in data["features"]:
                     name = feature["properties"]["Name"].lower()
                     rings = feature["geometry"]["coordinates"]
-                    polygon = Polygon(rings[0], rings[1:])
+                    geomtype = feature["geometry"]["type"]
+                    if geomtype == "Polygon":
+                        polygon = Polygon(rings[0], rings[1:])
+                    elif geomtype == "MultiPolygon":
+                        polygon = MultiPolygon([Polygon(x[0], x[1:]) for x in rings])
+                    else:
+                        raise ValueError("Invalid geometry type.")
                     if name not in mapping:
                         continue
                     i18n_key = mapping[name]["i18n_key"]
