@@ -74,7 +74,11 @@ def write_to_csv(filename: str, data: dict):
             line = [str(x) for x in get_locations(key)]
             for group in groups:
                 if group not in item:
-                    for i in range(9):
+                    if group == "ALTER_10JG":
+                        c = 9
+                    else:
+                        c = 5
+                    for i in range(c):
                         line.append("0")
                     continue
                 for val in item[group]:

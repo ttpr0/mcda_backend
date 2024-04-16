@@ -188,11 +188,11 @@ def insertPopulation() -> None:
         "standard": {
             "i18n_key": "population.groups.standard",
             "items": {
-                "short_00_09": (0, 17),
-                "short_10_19": (18, 29),
-                "short_20_29": (30, 49),
-                "short_30_39": (50, 64),
-                "short_80x": (65,)
+                "short_00_17": (0, 17),
+                "short_18_29": (18, 29),
+                "short_30_49": (30, 49),
+                "short_50_64": (50, 64),
+                "short_65x": (65,)
             }
         },
         "full": {
@@ -283,6 +283,7 @@ def insertPopulation() -> None:
             line = file.readline()
             if not line:
                 break
+            line = line.strip()
             tokens = line.split(delimiter)
             attr = {}
             for i, token in enumerate(tokens):
@@ -290,7 +291,7 @@ def insertPopulation() -> None:
                 if key in ["wgs_x", "wgs_y"]:
                     attr[key] = float(token)
                 else:
-                    attr[key] = int(token)
+                    attr[key] = int(float(token))
             population_data.append(attr)
 
     # write to tables
