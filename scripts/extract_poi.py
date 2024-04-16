@@ -1,7 +1,6 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
 import json
-from shapely import contains_xy, Polygon
 import sqlite3
 import random
 
@@ -42,14 +41,6 @@ def join_category_points(locs, categories):
 
     return joined
 
-def read_filter_polygon(filename):
-    with open(filename, "r") as file:
-        data = json.loads(file.read())
-        geom = data["features"][0]["geometry"]
-        typ = geom["type"]
-        coordinates = geom["coordinates"]
-        return Polygon(coordinates[0])
-
 CATEGORY_MAPPING = {
     296: "supermarket",
     225: "other_local_supply",
@@ -83,13 +74,11 @@ SPLIT_CATEGORIES = {
 def _select_random_category(categories, indices):
     return categories[random.choice(indices)]
 
-def extract_locations(poi, filter_polygon):
+def extract_locations(poi):
     global CATEGORY_MAPPING, SPLIT_CATEGORIES
     locs = {}
     for lon, lat, cat_id in poi:
         if cat_id not in CATEGORY_MAPPING:
-            continue
-        if not contains_xy(filter_polygon, lon, lat):
             continue
         cat = CATEGORY_MAPPING[cat_id]
         if cat in SPLIT_CATEGORIES:
@@ -100,9 +89,9 @@ def extract_locations(poi, filter_polygon):
         locs[cat].append((lon, lat))
     return locs
 
-def write_facilities(locs_dict):
+def write_facilities(locs_dict, dir: str):
     for cat in locs_dict:
-        with open(f"./files/facilities/{cat}.geojson", "w") as file:
+        with open(f"{dir}/{cat}.geojson", "w") as file:
             features = []
             for lon, lat in locs_dict[cat]:
                 features.append({
@@ -138,7 +127,7 @@ PHYSICIAN_IDS = {
     "anasthesisten": (300, 301)
 }
 
-def write_physicians(locs_dict):
+def write_physicians(locs_dict, dir: str):
     spec_count_features = []
     loc_features = []
     for cat in locs_dict:
@@ -178,9 +167,9 @@ def write_physicians(locs_dict):
         "type": "FeatureCollection",
         "features": loc_features
     }
-    with open("./files/physicians/outpatient_physician_location_specialist_count.geojson", "w") as file:
+    with open(f"{dir}/outpatient_physician_location_specialist_count.geojson", "w") as file:
         file.write(json.dumps(spec_count_data))
-    with open("./files/physicians/outpatient_physician_location_based.geojson", "w") as file:
+    with open(f"{dir}/outpatient_physician_location_based.geojson", "w") as file:
         file.write(json.dumps(loc_data))
 
 def write_categories(data):
@@ -196,7 +185,7 @@ def write_index(data):
             file.write(f"{row[0]};{row[1]};{row[2]}\n")
 
 if __name__ == "__main__":
-    DB = "./niedersachsen.sqlite"
+    DB = "D:/Daten/germany.poi"
     
     print("start reading poi_index...")
     poi_index = read(DB, "poi_index")
@@ -210,13 +199,12 @@ if __name__ == "__main__":
     print("    finished")
 
     print("extracting locations...")
-    filt = read_filter_polygon("./niedersachsen_buffer.json")
-    locs = extract_locations(poi, filt)
+    locs = extract_locations(poi)
     print("    finished")
 
     print("start writing facilities...")
-    write_facilities(locs)
+    write_facilities(locs, "./files/temp/facilities")
     print("    finished")
     print("start writing physicans...")
-    write_physicians(locs)
+    write_physicians(locs, "./files/temp/physicians")
     print("    finished")

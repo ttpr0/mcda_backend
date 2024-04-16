@@ -68,8 +68,8 @@ def insertPlanningAreas() -> None:
             with open(PLANNING_AREAS_DIR + "/" + file, "r") as file:
                 data = json.loads(file.read())
                 for feature in data["features"]:
-                    name = feature["attributes"]["HPB"].lower()
-                    rings = feature["geometry"]["rings"]
+                    name = feature["properties"]["Name"].lower()
+                    rings = feature["geometry"]["coordinates"]
                     polygon = Polygon(rings[0], rings[1:])
                     if name not in mapping:
                         continue
