@@ -153,28 +153,54 @@ def insertPhysiciansList() -> None:
         session.commit()
 
 def insertPopulation() -> None:
+    # populations = {
+    #     "standard": {
+    #         "i18n_key": "population.groups.standard",
+    #         "items": {
+    #             "std_00_09": (0, 9),
+    #             "std_10_19": (10, 19),
+    #             "std_20_39": (20, 39),
+    #             "std_40_59": (40, 59),
+    #             "std_60_79": (60, 79),
+    #             "std_80x": (80,)
+    #         }
+    #     },
+    #     "kita_schul": {
+    #         "i18n_key": "population.groups.kitaSchul",
+    #         "items": {
+    #             "ksc_00_02": (0, 2),
+    #             "ksc_03_05": (3, 5),
+    #             "ksc_06_09": (6, 9),
+    #             "ksc_10_14": (10, 14),
+    #             "ksc_15_17": (15, 17),
+    #             "ksc_18_19": (18, 19),
+    #             "ksc_20x": (20,)
+    #         }
+    #     },
+    # }
     populations = {
         "standard": {
             "i18n_key": "population.groups.standard",
             "items": {
-                "std_00_09": (0, 9),
-                "std_10_19": (10, 19),
-                "std_20_39": (20, 39),
-                "std_40_59": (40, 59),
-                "std_60_79": (60, 79),
-                "std_80x": (80,)
+                "short_00_09": (0, 17),
+                "short_10_19": (18, 29),
+                "short_20_29": (30, 49),
+                "short_30_39": (50, 64),
+                "short_80x": (65,)
             }
         },
-        "kita_schul": {
-            "i18n_key": "population.groups.kitaSchul",
+        "full": {
+            "i18n_key": "population.groups.standard",
             "items": {
-                "ksc_00_02": (0, 2),
-                "ksc_03_05": (3, 5),
-                "ksc_06_09": (6, 9),
-                "ksc_10_14": (10, 14),
-                "ksc_15_17": (15, 17),
-                "ksc_18_19": (18, 19),
-                "ksc_20x": (20,)
+                "std_00_09": (0, 9),
+                "std_10_19": (10, 19),
+                "std_20_29": (20, 29),
+                "std_30_39": (30, 39),
+                "std_40_49": (40, 49),
+                "std_50_59": (50, 59),
+                "std_60_69": (60, 69),
+                "std_70_79": (70, 79),
+                "std_80x": (80,)
             }
         },
     }
@@ -199,6 +225,7 @@ def insertPopulation() -> None:
     for group in populations:
         meta_table_name = f"population_{group}_meta"
         meta_table_spec = [
+            Column("pid", Integer, primary_key=True, autoincrement=True),
             Column("age_group_key", String),
             Column("from_", Integer),
             Column("to_", Integer),
@@ -206,6 +233,7 @@ def insertPopulation() -> None:
         create_table(meta_table_name, meta_table_spec)
         table_name = f"population_{group}"
         table_spec = [
+            Column("pid", Integer, primary_key=True, autoincrement=True),
             Column("geometry", Geometry("POINT", srid=4326)),
             Column("x", Float),
             Column("y", Float),
@@ -240,86 +268,23 @@ def insertPopulation() -> None:
     population_data = []
     with open(POPULATION_FILE, 'r') as file:
         delimiter = ';'
-        line = file.readline()
-        tokens = line.split(delimiter)
-        # population indices
-        index_ew_gesamt = -1
-        index_stnd00_09 = -1
-        index_stnd10_19 = -1
-        index_stnd20_39 = -1
-        index_stnd40_59 = -1
-        index_stnd60_79 = -1
-        index_stnd80x = -1
-        index_kisc00_02 = -1
-        index_kisc03_05 = -1
-        index_kisc06_09 = -1
-        index_kisc10_14 = -1
-        index_kisc15_17 = -1
-        index_kisc18_19 = -1
-        index_kisc20x = -1
-        # geom indices
-        index_geom = -1
-        index_geom_utm = -1
+        header = file.readline()
+        tokens = header.split(delimiter)
+        indizes = {}
         for i, token in enumerate(tokens):
-            if token == "EW_GESAMT":
-                index_ew_gesamt = i
-            if token == "GEOM":
-                index_geom = i
-            if token == "GEOM_UTM":
-                index_geom_utm = i
-            if token == "STND00_09":
-                index_stnd00_09 = i
-            if token == "STND10_19":
-                index_stnd10_19 = i
-            if token == "STND20_39":
-                index_stnd20_39 = i
-            if token == "STND40_59":
-                index_stnd40_59 = i
-            if token == "STND60_79":
-                index_stnd60_79 = i
-            if token == "STND80X":
-                index_stnd80x = i
-            if token == "KITA_SCHUL":
-                index_kisc00_02 = i
-            if token == "KITA_SC_01":
-                index_kisc03_05 = i
-            if token == "KITA_SC_02":
-                index_kisc06_09 = i
-            if token == "KITA_SC_03":
-                index_kisc10_14 = i
-            if token == "KITA_SC_04":
-                index_kisc15_17 = i
-            if token == "KITA_SC_05":
-                index_kisc18_19 = i
-            if token == "KITA_SC_06":
-                index_kisc20x = i
+            indizes[i] = token
         while True:
             line = file.readline()
             if not line:
                 break
             tokens = line.split(delimiter)
-            point: Point = from_wkb(bytes.fromhex(tokens[index_geom]))
-            utm_point: Point = from_wkb(bytes.fromhex(tokens[index_geom_utm]))
-            attr = {
-                "wgs_x": point.x,
-                "wgs_y": point.y,
-                "utm_x": utm_point.x,
-                "utm_y": utm_point.y,
-            }
-            attr["ew_gesamt"] = int(float(tokens[index_ew_gesamt].replace(",", ".")))
-            attr["std_00_09"] = int(float(tokens[index_stnd00_09].replace(",", ".")))
-            attr["std_10_19"] = int(float(tokens[index_stnd10_19].replace(",", ".")))
-            attr["std_20_39"] = int(float(tokens[index_stnd20_39].replace(",", ".")))
-            attr["std_40_59"] = int(float(tokens[index_stnd40_59].replace(",", ".")))
-            attr["std_60_79"] = int(float(tokens[index_stnd60_79].replace(",", ".")))
-            attr["std_80x"] = int(float(tokens[index_stnd80x].replace(",", ".")))
-            attr["ksc_00_02"] = int(float(tokens[index_kisc00_02].replace(",", ".")))
-            attr["ksc_03_05"] = int(float(tokens[index_kisc03_05].replace(",", ".")))
-            attr["ksc_06_09"] = int(float(tokens[index_kisc06_09].replace(",", ".")))
-            attr["ksc_10_14"] = int(float(tokens[index_kisc10_14].replace(",", ".")))
-            attr["ksc_15_17"] = int(float(tokens[index_kisc15_17].replace(",", ".")))
-            attr["ksc_18_19"] = int(float(tokens[index_kisc18_19].replace(",", ".")))
-            attr["ksc_20x"] = int(float(tokens[index_kisc20x].replace(",", ".")))
+            attr = {}
+            for i, token in enumerate(tokens):
+                key = indizes[i]
+                if key in ["wgs_x", "wgs_y"]:
+                    attr[key] = float(token)
+                else:
+                    attr[key] = int(token)
             population_data.append(attr)
 
     # write to tables
@@ -391,6 +356,7 @@ def insertFacilities():
     for facility in facilities:
         table_name = f"facilities_{facility}"
         table_spec = [
+            Column("pid", Integer, primary_key=True, autoincrement=True),
             Column("geometry", Geometry("POINT", srid=4326)),
             Column("weight", Integer),
         ]
