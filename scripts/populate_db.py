@@ -274,7 +274,7 @@ def insertPopulation() -> None:
     population_data = []
     with open(POPULATION_FILE, 'r') as file:
         delimiter = ';'
-        header = file.readline()
+        header = file.readline().strip()
         tokens = header.split(delimiter)
         indizes = {}
         for i, token in enumerate(tokens):
