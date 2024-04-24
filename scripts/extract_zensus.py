@@ -2,6 +2,7 @@
 
 import re
 from pyproj import Transformer
+from shapely import Polygon, to_wkt
 
 def read_zenus(filename: str) -> dict:
     # maps cell-codes to population-data
@@ -48,16 +49,21 @@ def read_zenus(filename: str) -> dict:
 wgs_transformer = Transformer.from_crs(3035, 4326, always_xy=True)
 utm_transformer = Transformer.from_crs(3035, 25832, always_xy=True)
 
-def get_locations(key: str) -> tuple[float, float, float, float]:
+def get_locations(key: str) -> tuple[Polygon, float, float, float, float]:
     tokens = re.split("CRS|RES|N|E", key)
     crs = int(tokens[1])
     if crs != 3035:
         raise ValueError("invalid CRS!")
     north = int(tokens[3])
     east = int(tokens[4])
-    wgs_x, wgs_y = wgs_transformer.transform(east, north)
-    utm_x, utm_y = utm_transformer.transform(east, north)
-    return wgs_x, wgs_y, utm_x, utm_y
+    grid_size = int(tokens[2].removesuffix("m"))
+    offset = grid_size / 2
+    wgs_x, wgs_y = wgs_transformer.transform(east+offset, north+offset)
+    utm_x, utm_y = utm_transformer.transform(east+offset, north+offset)
+    ll = wgs_transformer.transform(east, north)
+    ur = wgs_transformer.transform(east+grid_size, north+grid_size)
+    poly = Polygon([(ll[0], ll[1]), (ur[0], ll[1]), (ur[0], ur[1]), (ll[0], ur[1]), (ll[0], ll[1])])
+    return poly, wgs_x, wgs_y, utm_x, utm_y
 
 def write_to_csv(filename: str, data: dict):
     groups = {
@@ -65,13 +71,14 @@ def write_to_csv(filename: str, data: dict):
         "ALTER_KURZ": ["short_00_17", "short_18_29", "short_30_49", "short_50_64", "short_65x"],
     }
     with open(filename, "w") as file:
-        headers = ["wgs_x", "wgs_y", "utm_x", "utm_y"]
+        headers = ["geometry", "wgs_x", "wgs_y", "utm_x", "utm_y"]
         for group in groups:
             for key in groups[group]:
                 headers.append(key)
         file.write(';'.join(headers) + "\n")
         for key, item in data.items():
-            line = [str(x) for x in get_locations(key)]
+            poly, wgs_x, wgs_y, utm_x, utm_y = get_locations(key)
+            line = [to_wkt(poly), str(wgs_x), str(wgs_y), str(utm_x), str(utm_y)]
             for group in groups:
                 if group not in item:
                     if group == "ALTER_10JG":

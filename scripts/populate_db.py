@@ -240,7 +240,7 @@ def insertPopulation() -> None:
         table_name = f"population_{group}"
         table_spec = [
             Column("pid", Integer, primary_key=True, autoincrement=True),
-            Column("geometry", Geometry("POINT", srid=4326)),
+            Column("geometry", Geometry("POLYGON", srid=4326)),
             Column("x", Float),
             Column("y", Float),
             Column("utm_x", Float),
@@ -288,7 +288,9 @@ def insertPopulation() -> None:
             attr = {}
             for i, token in enumerate(tokens):
                 key = indizes[i]
-                if key in ["wgs_x", "wgs_y"]:
+                if key == "geometry":
+                    attr[key] = token
+                elif key in ["wgs_x", "wgs_y"]:
                     attr[key] = float(token)
                 else:
                     attr[key] = int(float(token))
@@ -307,7 +309,7 @@ def insertPopulation() -> None:
             session.execute(stmt)
             for attr in population_data:
                 val = {
-                    "geometry": from_shape(Point(attr["wgs_x"], attr["wgs_y"])),
+                    "geometry": attr["geometry"],
                     "x": attr["wgs_x"],
                     "y": attr["wgs_y"],
                     "utm_x": attr["utm_x"],
