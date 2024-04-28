@@ -57,6 +57,8 @@ def get_population(query: Polygon, typ: str = 'standard_all', age_groups: list[s
         stmt = select(pop_table.c.x, pop_table.c.y, pop_table.c.utm_x, pop_table.c.utm_y, age_sum).where(pop_table.c.geometry.ST_Within(query_wkb))
         rows = session.execute(stmt).fetchall()
         for row in rows:
+            if row[4] == 0:
+                continue
             locations.append((row[0], row[1]))
             utm_locations.append((row[2], row[3]))
             weights.append(row[4])

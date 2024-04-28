@@ -3,14 +3,18 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from shapely import Polygon
-from typing import Annotated
+from typing import Annotated, cast
 import asyncio
+import numpy as np
+import pyaccess
 
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.depends import get_current_user, User
-from oas_api.multi_criteria import calcMultiCriteria, Infrastructure, calcMultiCriteria2
+from oas_api.multi_criteria import Infrastructure, calcMultiCriteria2
+
+STATE = {}
 
 
 router = APIRouter()
@@ -51,13 +55,22 @@ async def decision_support_api(req: MultiCriteriaRequest, user: Annotated[User, 
 
     features: list = []
     minx, miny, maxx, maxy = get_extent(utm_points)
-    for p in utm_points:
+    for p, w in zip(utm_points, population_weights):
         features.append({
             "coordinates": [p[0], p[1]],
-            "properties": {}
+            "properties": {
+                "population": w
+            }
         })
 
     accessibilities = await task
+    accessibilities["population"] = cast(list[float], population_weights)
+
+    global STATE
+    STATE[user.get_name()] = {
+        "accessibilities": accessibilities,
+        "infrastructures": infrastructures,
+    }
 
     for name, array in accessibilities.items():
         for i, _ in enumerate(utm_points):
@@ -77,3 +90,97 @@ async def decision_support_api(req: MultiCriteriaRequest, user: Annotated[User, 
     crs = "EPSG:25832"
 
     return {"features": features, "crs": crs, "extend": extend, "size": size}
+
+@router.post("/analysis/stat_1")
+async def stat_1_api(user: Annotated[User, Depends(get_current_user)]):
+    """Computes the amount of different facility-types serving each population-cell
+    """
+    access = STATE[user.get_name()]["accessibilities"]
+    population = access["population"]
+    amount = np.zeros((len(population,)), dtype=np.int32)
+    for key in access.keys():
+        if key in ["population", "multiCriteria"]:
+            continue
+        values = access[key]
+        for i in range(len(population)):
+            if values[i] == -9999:
+                continue
+            amount[i] += 1
+    unique, counts = np.unique(amount, return_counts=True)
+    return {
+        "labels": [str(i) for i in list(reversed(unique.tolist()))],
+        "dataset": {
+            "barPercentage": 0.5,
+            "barThickness": 6,
+            "maxBarThickness": 8,
+            "data": list(reversed(counts.tolist())),
+        }
+    }
+
+class AnalysisRequest(BaseModel):
+    facility: str
+
+@router.post("/analysis/stat_2")
+async def stat_2_api(req: AnalysisRequest, user: Annotated[User, Depends(get_current_user)]):
+    access = STATE[user.get_name()]["accessibilities"]
+    values: list[float] = access[req.facility]
+    infras = STATE[user.get_name()]["infrastructures"]
+    weight_sum = sum([i.weight for i in infras.values()])
+    infra: Infrastructure = infras[req.facility]
+    weight = infra.weight / weight_sum
+    quality = np.zeros((len(values,)), dtype=np.int32)
+    decay = pyaccess.hybrid_decay([int(i) for i in infra.ranges], infra.range_factors)
+    cutoff_points = [weight * decay.get_distance_weight(int(i)) - 0.0001 for i in infra.ranges]
+    for i in range(len(values)):
+        quality[i] = 4
+        if values[i] == -9999:
+            continue
+        for j, p in enumerate(cutoff_points):
+            if values[i] >= p:
+                quality[i] = j
+                break
+    unique, counts = np.unique(quality, return_counts=True)
+    return {
+        "labels": ["sehr gut", "gut", "ausreichend", "mangelhaft", "ungenügend"],
+        "dataset": {
+            "barPercentage": 0.5,
+            "barThickness": 6,
+            "maxBarThickness": 8,
+            "data": counts.tolist(),
+        }
+    }
+
+@router.post("/analysis/stat_3")
+async def stat_3_api(req: AnalysisRequest, user: Annotated[User, Depends(get_current_user)]):
+    access = STATE[user.get_name()]["accessibilities"]
+    values: list[float] = access[req.facility]
+    numbers = np.random.randint(0, 10, (len(values),))
+    unique, counts = np.unique(numbers, return_counts=True)
+    return {
+        "labels": [str(i) for i in list(reversed(unique.tolist()))],
+        "dataset": {
+            "barPercentage": 0.5,
+            "barThickness": 6,
+            "maxBarThickness": 8,
+            "data": list(reversed(counts.tolist())),
+        }
+    }
+
+@router.post("/analysis/hotspot")
+async def hotspot_api(user: Annotated[User, Depends(get_current_user)]):
+    access = STATE[user.get_name()]["accessibilities"]
+    population = access["population"]
+    multi = access["multiCriteria"]
+    data = []
+    for i in range(len(population)):
+        x = population[i]
+        y = multi[i]
+        if y == -9999:
+            continue
+        data.append({"x": x, "y": y})
+    return {
+        "label": "counts1",
+        "backgroundColor": "blue",
+        "data": data
+    }
+
