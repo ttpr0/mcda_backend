@@ -51,8 +51,7 @@ class ProfileManager:
     _profiles: dict[str, ProfileData]
 
     def __init__(self):
-        self._graphs = {}
-        self.profiles = {}
+        self._profiles = {}
 
     def add_profile(self, name: str, type: Profile, graph: pyaccess.Graph):
         self._profiles[name] = ProfileData(type, graph)
@@ -64,7 +63,7 @@ class ProfileManager:
         params = self._profiles[profile]
         graph = params._graph
         match params._type:
-            case Profile.DRIVING, Profile.WALKING, Profile.CYCLING:
+            case Profile.DRIVING | Profile.WALKING | Profile.CYCLING:
                 return RoutingProfile(graph)
             case Profile.TRANSIT:
                 return TransitProfile(graph, weekday, timespan[0], timespan[1])
@@ -77,22 +76,22 @@ def load_or_create_profiles():
     for profile in config.ROUTING_PROFILES:
         if profile_manager.has_profile(profile):
             continue
+        match profile:
+            case "driving-car":
+                profile_type = Profile.DRIVING
+                profile_decoder = "driving"
+            case "walking-foot":
+                profile_type = Profile.WALKING
+                profile_decoder = "walking"
+            case "cycling-bike":
+                profile_type = Profile.CYCLING
+                profile_decoder = "cycling"
+            case "public-transit":
+                profile_type = Profile.TRANSIT
+                profile_decoder = "walking"
         try:
             graph = pyaccess.load_graph(profile, config.GRAPH_DIR)
         except:
-            match profile:
-                case "driving-car":
-                    profile_type = Profile.DRIVING
-                    profile_decoder = "driving"
-                case "walking-foot":
-                    profile_type = Profile.WALKING
-                    profile_decoder = "walking"
-                case "cycling-bike":
-                    profile_type = Profile.CYCLING
-                    profile_decoder = "cycling"
-                case "public-transit":
-                    profile_type = Profile.TRANSIT
-                    profile_decoder = "walking"
             graph = pyaccess.parse_osm(config.GRAPH_OSM_FILE, profile_decoder)
             graph.optimize_base()
             graph.add_default_weighting()

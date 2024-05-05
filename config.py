@@ -1,5 +1,7 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+ACCESSIBILITYSERVICE_URL = "http://172.26.62.41:5001"
+
 GRAPH_DIR = "./files/graphs"
 GRAPH_OSM_FILE = "./files/osm.pbf"
 GRAPH_GTFS_DIR = "./files/gtfs"
