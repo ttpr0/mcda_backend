@@ -6,7 +6,7 @@ from shapely import Polygon
 from typing import Annotated, cast
 import asyncio
 import numpy as np
-import pyaccess
+# import pyaccess
 
 from models.population import get_population
 from models.facilities import get_facility
@@ -77,10 +77,6 @@ async def decision_support_api(req: MultiCriteriaRequest, user: Annotated[User, 
             feature = features[i]
             access: float = float(array[i])
             feature["properties"][name] = access
-            if population_weights[i] == 0 or access == -9999:
-                feature["properties"][name + "_weighted"] = -9999
-            else:
-                feature["properties"][name + "_weighted"] = access / population_weights[i]
 
     extend = [minx-50, miny-50, maxx+50, maxy+50]
     dx = extend[2] - extend[0]
@@ -129,8 +125,9 @@ async def stat_2_api(req: AnalysisRequest, user: Annotated[User, Depends(get_cur
     infra: Infrastructure = infras[req.facility]
     weight = infra.weight / weight_sum
     quality = np.zeros((len(values,)), dtype=np.int32)
-    decay = pyaccess.hybrid_decay([int(i) for i in infra.ranges], infra.range_factors)
-    cutoff_points = [weight * decay.get_distance_weight(int(i)) - 0.0001 for i in infra.ranges]
+    # decay = pyaccess.hybrid_decay([int(i) for i in infra.ranges], infra.range_factors)
+    # cutoff_points = [weight * decay.get_distance_weight(int(i)) - 0.0001 for i in infra.ranges]
+    cutoff_points = [weight * 1 - 0.0001 for i in infra.ranges]
     for i in range(len(values)):
         quality[i] = 4
         if values[i] == -9999:

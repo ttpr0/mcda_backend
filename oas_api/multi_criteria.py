@@ -81,12 +81,11 @@ async def calcMultiCriteria2(population_locations: list[tuple[float, float]], po
             "isochrone_smoothing": 5
         },
         "response": {
-            "scale": True,
+            "scale": False,
             "scale_range": [0, 100],
             "no_data_value": -9999,
         },
         "return_all": True,
-        "return_weighted": False,
     }
     loop = asyncio.get_running_loop()
     response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/multicriteria/multi", json=body, headers=header))
