@@ -1,3 +1,5 @@
+# Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
+
 from enum import Enum
 from typing import Protocol
 import numpy as np
@@ -5,24 +7,20 @@ import pyaccess
 
 import config
 
-class Profile(Enum):
-    DRIVING = 1
-    TRANSIT = 2
-    WALKING = 3
-    CYCLING = 4
-
 class IRoutingProfile(Protocol):
     def calc_reachability(self, dem_points: list[tuple[float, float]], sup_points: list[tuple[float, float]], decay: pyaccess._pyaccess_ext.IDistanceDecay) -> np.ndarray:
         ...
 
 class RoutingProfile:
     _graph: pyaccess.Graph
+    _weight: str
 
-    def __init__(self, graph: pyaccess.Graph):
+    def __init__(self, graph: pyaccess.Graph, _weight: str):
         self._graph = graph
+        self._weight = _weight
 
     def calc_reachability(self, dem_points: list[tuple[float, float]], sup_points: list[tuple[float, float]], decay: pyaccess._pyaccess_ext.IDistanceDecay) -> np.ndarray:
-        return pyaccess.calc_reachability(self._graph, dem_points, sup_points, decay)
+        return pyaccess.calc_reachability(self._graph, dem_points, sup_points, decay, weight=self._weight)
 
 class TransitProfile:
     _graph: pyaccess.Graph
@@ -39,70 +37,84 @@ class TransitProfile:
     def calc_reachability(self, dem_points: list[tuple[float, float]], sup_points: list[tuple[float, float]], decay: pyaccess._pyaccess_ext.IDistanceDecay) -> np.ndarray:
         return pyaccess.calc_reachability(self._graph, dem_points, sup_points, decay=decay, transit="transit", transit_weight=self._weekday, min_departure=self._min_departure, max_departure=self._max_departure)
 
-class ProfileData:
-    _type: Profile
-    _graph: pyaccess.Graph
+class Profile:
+    _weights: list[str]
 
-    def __init__(self, type: Profile, graph: pyaccess.Graph):
-        self._type = type
-        self._graph = graph
+    def __init__(self, weights):
+        self._weights = weights
 
 class ProfileManager:
-    _profiles: dict[str, ProfileData]
+    _graphs: dict[str, pyaccess.Graph]
+    _profiles: dict[str, Profile]
 
     def __init__(self):
-        self._profiles = {}
+        self._graphs = {}
+        self.profiles = {}
 
-    def add_profile(self, name: str, type: Profile, graph: pyaccess.Graph):
-        self._profiles[name] = ProfileData(type, graph)
+    def add_profile(self, name: str, graph: pyaccess.Graph, weights: list[str]):
+        self._graphs[name] = graph
+        self._profiles[name] = Profile(weights)
 
     def has_profile(self, name: str) -> bool:
         return name in self._profiles
 
-    def get_profile(self, profile: str, weekday: str = "wednesday", timespan: tuple[int , int]= (0, 100000)) -> IRoutingProfile | None:
+    def get_profile(self, profile: str, weight: str = "time", weekday: str = "wednesday", timespan: tuple[int , int]= (0, 100000)) -> IRoutingProfile | None:
+        graph = self._graphs[profile]
         params = self._profiles[profile]
-        graph = params._graph
-        match params._type:
-            case Profile.DRIVING | Profile.WALKING | Profile.CYCLING:
-                return RoutingProfile(graph)
-            case Profile.TRANSIT:
+        if weight not in params._weights:
+            raise Exception(f"Weight {weight} not found in profile {profile}")
+        match profile:
+            case "driving-car" | "walking-foot":
+                return RoutingProfile(graph, weight)
+            case "public-transit":
                 return TransitProfile(graph, weekday, timespan[0], timespan[1])
             case _:
                 return None
 
-def load_or_create_profiles():
+def build_driving_car(store: bool = True) -> pyaccess.Graph:
+    graph = pyaccess.parse_osm(config.GRAPH_OSM_FILE, "driving")
+    graph.optimize_base()
+    graph.add_default_weighting("time")
+    graph.store("driving-car", config.GRAPH_DIR)
+    return graph
+
+def build_walking_foot(store: bool = True) -> pyaccess.Graph:
+    graph = pyaccess.parse_osm(config.GRAPH_OSM_FILE, "walking")
+    graph.optimize_base()
+    graph.add_default_weighting("time")
+    graph.store("walking-foot", config.GRAPH_DIR)
+    return graph
+
+def build_public_transit(store: bool = True) -> pyaccess.Graph:
+    graph = pyaccess.parse_osm(config.GRAPH_OSM_FILE, "walking")
+    graph.optimize_base()
+    graph.add_default_weighting("time")
+    stops, conns, schedules = pyaccess.parse_gtfs(config.GRAPH_GTFS_DIR, config.GRAPH_GTFS_FILTER_POLYGON)
+    graph.add_public_transit("transit", stops, conns)
+    for day, schedule in schedules.items():
+        weight = pyaccess.new_transit_weighting(graph, "transit")
+        for i, conn in enumerate(schedule):
+            weight.set_connection_schedule(i, conn)
+        graph.add_transit_weighting(day, weight, "transit")
+    graph.store("public-transit", config.GRAPH_DIR)
+    return graph
+
+def load_or_create_profiles() -> ProfileManager:
     profile_manager = ProfileManager()
     # load or create profiles
     for profile in config.ROUTING_PROFILES:
         if profile_manager.has_profile(profile):
             continue
-        match profile:
-            case "driving-car":
-                profile_type = Profile.DRIVING
-                profile_decoder = "driving"
-            case "walking-foot":
-                profile_type = Profile.WALKING
-                profile_decoder = "walking"
-            case "cycling-bike":
-                profile_type = Profile.CYCLING
-                profile_decoder = "cycling"
-            case "public-transit":
-                profile_type = Profile.TRANSIT
-                profile_decoder = "walking"
         try:
             graph = pyaccess.load_graph(profile, config.GRAPH_DIR)
+            profile_manager.add_profile(profile, graph, ["time"])
         except:
-            graph = pyaccess.parse_osm(config.GRAPH_OSM_FILE, profile_decoder)
-            graph.optimize_base()
-            graph.add_default_weighting()
-            if profile == "public-transit":
-                stops, conns, schedules = pyaccess.parse_gtfs(config.GRAPH_GTFS_DIR, config.GRAPH_GTFS_FILTER_POLYGON)
-                graph.add_public_transit("transit", stops, conns)
-                for day, schedule in schedules.items():
-                    weight = pyaccess.new_transit_weighting(graph, "transit")
-                    for i, conn in enumerate(schedule):
-                        weight.set_connection_schedule(i, conn)
-                    graph.add_transit_weighting(day, weight, "transit")
-            graph.store(profile, config.GRAPH_DIR)
-        profile_manager.add_profile(profile, profile_type, graph)
+            match profile:
+                case "driving-car":
+                    graph = build_driving_car()
+                case "walking-foot":
+                    graph = build_walking_foot()
+                case "public-transit":
+                    graph = build_public_transit()
+            profile_manager.add_profile(profile, graph, ["time"])
     return profile_manager
