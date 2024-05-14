@@ -49,7 +49,7 @@ class ProfileManager:
 
     def __init__(self):
         self._graphs = {}
-        self.profiles = {}
+        self._profiles = {}
 
     def add_profile(self, name: str, graph: pyaccess.Graph, weights: list[str]):
         self._graphs[name] = graph
