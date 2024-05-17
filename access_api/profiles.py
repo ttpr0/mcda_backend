@@ -115,10 +115,15 @@ def load_or_create_profiles() -> ProfileManager:
         if profile_manager.has_profile(profile):
             continue
         try:
-            if profile in graph_cache:
-                graph = graph_cache[profile]
+            match profile:
+                case "public-transit":
+                    graph_name = "walking-foot"
+                case _:
+                    graph_name = profile
+            if graph_name in graph_cache:
+                graph = graph_cache[graph_name]
             else:
-                graph = pyaccess.load_graph(profile, config.GRAPH_DIR)
+                graph = pyaccess.load_graph(graph_name, config.GRAPH_DIR)
             profile_manager.add_profile(profile, graph, ["time"])
         except:
             match profile:
