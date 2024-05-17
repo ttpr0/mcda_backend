@@ -67,7 +67,7 @@ class ProfileManager:
     def has_profile(self, name: str) -> bool:
         return name in self._profiles
 
-    def get_profile(self, profile: str, weight: str = "time", weekday: str = "wednesday", timespan: tuple[int , int]= (0, 100000)) -> IRoutingProfile | None:
+    def get_profile(self, profile: str, weight: str = "time", weekday: str = "wednesday", timespan: tuple[int , int]= (28800, 36000)) -> IRoutingProfile | None:
         graph = self._graphs[profile]
         params = self._profiles[profile]
         if weight not in params._weights:
@@ -81,19 +81,43 @@ class ProfileManager:
                 return None
 
 def build_driving_car(store: bool = True) -> pyaccess.Graph:
-    graph = pyaccess.parse_osm(config.GRAPH_OSM_FILE, "driving")
-    graph.optimize_base()
+    nodes, edges = pyaccess.parse_osm(config.GRAPH_OSM_FILE, "driving")
+    graph = pyaccess.new_graph(nodes, edges)
+    # optimize graph
+    unconnected = pyaccess.calc_unconnected_nodes(graph)
+    graph.remove_nodes(unconnected)
+    pyaccess.util.remove_graph_nodes(nodes, edges, unconnected)
+    ordering = pyaccess.calc_dfs_ordering(graph)
+    graph.reorder_nodes(ordering)
+    pyaccess.util.reorder_graph_data(nodes, edges, ordering)
+    # build weighting
     weight = pyaccess.build_fastest_weighting(graph)
     graph.add_weighting("time", weight)
-    graph.store("driving-car", config.GRAPH_DIR)
+    # store graph
+    if store:
+        graph.store("driving-car", config.GRAPH_DIR)
+        nodes.to_feather(f"{config.GRAPH_DIR}/driving-car-nodes")
+        edges.to_feather(f"{config.GRAPH_DIR}/driving-car-edges")
     return graph
 
 def build_walking_foot(store: bool = True) -> pyaccess.Graph:
-    graph = pyaccess.parse_osm(config.GRAPH_OSM_FILE, "walking")
-    graph.optimize_base()
+    nodes, edges = pyaccess.parse_osm(config.GRAPH_OSM_FILE, "walking")
+    graph = pyaccess.new_graph(nodes, edges)
+    # optimize graph
+    unconnected = pyaccess.calc_unconnected_nodes(graph)
+    graph.remove_nodes(unconnected)
+    pyaccess.util.remove_graph_nodes(nodes, edges, unconnected)
+    ordering = pyaccess.calc_dfs_ordering(graph)
+    graph.reorder_nodes(ordering)
+    pyaccess.util.reorder_graph_data(nodes, edges, ordering)
+    # build weighting
     weight = pyaccess.build_fastest_weighting(graph)
     graph.add_weighting("time", weight)
-    graph.store("walking-foot", config.GRAPH_DIR)
+    # store graph
+    if store:
+        graph.store("walking-foot", config.GRAPH_DIR)
+        nodes.to_feather(f"{config.GRAPH_DIR}/walking-foot-nodes")
+        edges.to_feather(f"{config.GRAPH_DIR}/walking-foot-edges")
     return graph
 
 def build_public_transit(graph: pyaccess.Graph, store: bool = True) -> pyaccess.Graph:
@@ -104,7 +128,8 @@ def build_public_transit(graph: pyaccess.Graph, store: bool = True) -> pyaccess.
         for i, conn in enumerate(schedule):
             weight.set_connection_schedule(i, conn)
         graph.add_transit_weighting(day, weight, "transit")
-    graph.store()
+    if store:
+        graph.store()
     return graph
 
 def load_or_create_profiles() -> ProfileManager:
