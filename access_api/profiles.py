@@ -124,6 +124,7 @@ def load_or_create_profiles() -> ProfileManager:
                 graph = graph_cache[graph_name]
             else:
                 graph = pyaccess.load_graph(graph_name, config.GRAPH_DIR)
+                graph_cache[graph_name] = graph
             profile_manager.add_profile(profile, graph, ["time"])
         except:
             match profile:
