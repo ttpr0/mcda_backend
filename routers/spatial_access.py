@@ -7,7 +7,7 @@ import asyncio
 import time
 from typing import Annotated
 
-from oas_api.fca import calcFCA
+from access_api.fca import calcFCA
 from models.population import get_population
 from models.physicians import get_physicians
 from models.planning_areas import get_planning_area
@@ -47,13 +47,13 @@ async def spatial_access_api(req: SpatialAccessRequest, user: Annotated[User, De
     t2 = time.time()
     print(f"time to load population: {t2-t1}")
     facility_points, facility_weights = get_physicians(buffer_query, req.facility_type, req.facility_capacity)
-    ranges, range_factors = get_distance_decay(req.travel_mode, req.decay_type, req.supply_level, req.facility_type)
+    distance_decay = get_distance_decay(req.travel_mode, req.decay_type, req.supply_level, req.facility_type)
     travel_mode = req.travel_mode
     if not is_valid_travel_mode(travel_mode):
         travel_mode = get_default_travel_mode()
 
     task = asyncio.create_task(calcFCA(
-        points, weights, facility_points, facility_weights, ranges, range_factors, "isochrones", travel_mode))
+        points, weights, facility_points, facility_weights, distance_decay, travel_mode))
 
     minx, miny, maxx, maxy = get_extent(utm_points)
     extend = (minx-50, miny-50, maxx+50, maxy+50)

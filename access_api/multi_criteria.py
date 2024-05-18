@@ -5,35 +5,37 @@ import pyaccess
 
 import config
 from . import PROFILES
+from .decay import get_distance_decay
 
 
 class Infrastructure():
     weight: float
-    ranges: list[float]
-    range_factors: list[float]
+    decay: dict
+    cutoffs: list[int]
     locations: list[tuple[float, float]]
     weights: list[float]
 
-    def __init__(self, weight: float, ranges: list[float], range_factors: list[float], locations: list[tuple[float, float]], weights: list[float]):
+    def __init__(self, weight: float, decay: dict, cutoffs: list[int], locations: list[tuple[float, float]], weights: list[float]):
         self.weight = weight
-        self.ranges = ranges
-        self.range_factors = range_factors
+        self.decay = decay
+        self.cutoffs = cutoffs
         self.locations = locations
         self.weights = weights        
 
-async def calcMultiCriteria2(population_locations: list[tuple[float, float]], population_weights: list[int], infrastructures: dict[str, Infrastructure]) -> dict[str, list[float]]:
+async def calcMultiCriteria(population_locations: list[tuple[float, float]], population_weights: list[int], infrastructures: dict[str, Infrastructure], travel_mode: str = "driving-car") -> dict[str, list[float]]:
     global PROFILES
-    profile = PROFILES.get_profile("driving-car")
+    profile = PROFILES.get_profile(travel_mode)
     if profile is None:
-        raise ValueError("Invalid profile.")
+        raise ValueError(f"Invalid profile {travel_mode}.")
     access = {}
     access["multiCriteria"] = [0] * len(population_locations)
-    weight_sum = sum([i.weight for i in infrastructures.values()])
+    # weight_sum = sum([i.weight for i in infrastructures.values()])
     for name, infra in infrastructures.items():
-        decay = pyaccess.hybrid_decay([int(i) for i in infra.ranges], infra.range_factors)
-        # decay = pyaccess.linear_decay(int(infra.ranges[-1]))
+        decay = get_distance_decay(infra.decay)
+        if decay is None:
+            raise ValueError(f"Invalid decay parameters {infra.decay}.")
         reach = profile.calc_reachability(population_locations, infra.locations, decay)
-        weight = infrastructures[name].weight * 100 / weight_sum
+        weight = infrastructures[name].weight
         multi = access["multiCriteria"]
         for j in range(len(population_locations)):
             if reach[j] <= 0:

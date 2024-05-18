@@ -122,7 +122,7 @@ def build_walking_foot(store: bool = True) -> pyaccess.Graph:
 
 def build_public_transit(graph: pyaccess.Graph, store: bool = True) -> pyaccess.Graph:
     stops, conns, schedules = pyaccess.parse_gtfs(config.GRAPH_GTFS_DIR, config.GRAPH_GTFS_FILTER_POLYGON)
-    graph.add_public_transit("transit", stops, conns)
+    graph.add_public_transit("transit", stops, conns, weight="time")
     for day, schedule in schedules.items():
         weight = pyaccess.new_transit_weighting(graph, "transit")
         for i, conn in enumerate(schedule):
@@ -150,6 +150,9 @@ def load_or_create_profiles() -> ProfileManager:
             else:
                 graph = pyaccess.load_graph(graph_name, config.GRAPH_DIR)
                 graph_cache[graph_name] = graph
+            if profile == "public-transit":
+                if not graph.has_public_transit("transit"):
+                    raise ValueError("")
             profile_manager.add_profile(profile, graph, ["time"])
         except:
             match profile:

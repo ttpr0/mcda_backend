@@ -6,13 +6,14 @@ from shapely import Polygon
 from typing import Annotated, cast
 import asyncio
 import numpy as np
-# import pyaccess
+import pandas as pd
 
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.depends import get_current_user, User
-from oas_api.multi_criteria import Infrastructure, calcMultiCriteria2
+from access_api.multi_criteria import Infrastructure, calcMultiCriteria
+from helpers.dummy_decay import get_dummy_decay
 
 STATE = {}
 
@@ -21,8 +22,8 @@ router = APIRouter()
 
 class InfrastructureParams(BaseModel):
     infrastructure_weight: float
-    ranges: list[float]
-    range_factors: list[float]
+    distance_decay: dict
+    cutoff_points: list[int]
     facility_type: str
 
 class MultiCriteriaRequest(BaseModel):
@@ -33,6 +34,8 @@ class MultiCriteriaRequest(BaseModel):
     # population parameters
     population_type: str
     population_indizes: list[str]|None
+    # travel parameters
+    travel_mode: str
 
 
 @router.post("/grid")
@@ -49,9 +52,9 @@ async def decision_support_api(req: MultiCriteriaRequest, user: Annotated[User, 
     infrastructures = {}
     for name, param in req.infrastructures.items():
         facility_points, facility_weights = get_facility(param.facility_type, buffer_query)
-        infrastructures[name] = Infrastructure(param.infrastructure_weight, param.ranges, param.range_factors, facility_points, facility_weights)
+        infrastructures[name] = Infrastructure(param.infrastructure_weight, param.distance_decay, param.cutoff_points, facility_points, facility_weights)
 
-    task = asyncio.create_task(calcMultiCriteria2(population_locations, population_weights, infrastructures))
+    task = asyncio.create_task(calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
 
     features: list = []
     minx, miny, maxx, maxy = get_extent(utm_points)
@@ -94,22 +97,34 @@ async def stat_1_api(user: Annotated[User, Depends(get_current_user)]):
     access = STATE[user.get_name()]["accessibilities"]
     population = access["population"]
     amount = np.zeros((len(population,)), dtype=np.int32)
+    facility_count = 0
     for key in access.keys():
         if key in ["population", "multiCriteria"]:
             continue
+        facility_count += 1
         values = access[key]
         for i in range(len(population)):
             if values[i] == -9999:
                 continue
             amount[i] += 1
-    unique, counts = np.unique(amount, return_counts=True)
+    df = pd.DataFrame({"amount": amount, "population": population})
+    group = df.groupby('amount')
+    agg = group.aggregate({'population': 'sum'})
+    labels = []
+    data = []
+    for i in range(facility_count, -1, -1):
+        labels.append(str(i))
+        if i in agg.index:
+            data.append(int(agg.loc[i, "population"])) # type: ignore
+        else:
+            data.append(0)
     return {
-        "labels": [str(i) for i in list(reversed(unique.tolist()))],
+        "labels": labels,
         "dataset": {
             "barPercentage": 0.5,
             "barThickness": 6,
             "maxBarThickness": 8,
-            "data": list(reversed(counts.tolist())),
+            "data": data,
         }
     }
 
@@ -118,18 +133,18 @@ class AnalysisRequest(BaseModel):
 
 @router.post("/analysis/stat_2")
 async def stat_2_api(req: AnalysisRequest, user: Annotated[User, Depends(get_current_user)]):
+    """Computes the quality of supply serving each population cell for each infrastructure
+    """
     access = STATE[user.get_name()]["accessibilities"]
     values: list[float] = access[req.facility]
+    population: list[int] = access["population"]
     infras = STATE[user.get_name()]["infrastructures"]
-    weight_sum = sum([i.weight for i in infras.values()])
     infra: Infrastructure = infras[req.facility]
-    weight = infra.weight / weight_sum
+    decay = get_dummy_decay(infra.decay)
+    cutoff_points = [decay.get_distance_weight(int(i)) - 0.0001 for i in infra.cutoffs]
     quality = np.zeros((len(values,)), dtype=np.int32)
-    # decay = pyaccess.hybrid_decay([int(i) for i in infra.ranges], infra.range_factors)
-    # cutoff_points = [weight * decay.get_distance_weight(int(i)) - 0.0001 for i in infra.ranges]
-    cutoff_points = [weight * 1 - 0.0001 for i in infra.ranges]
     for i in range(len(values)):
-        quality[i] = 4
+        quality[i] = len(infra.cutoffs)
         if values[i] == -9999:
             continue
         for j, p in enumerate(cutoff_points):
@@ -137,13 +152,22 @@ async def stat_2_api(req: AnalysisRequest, user: Annotated[User, Depends(get_cur
                 quality[i] = j
                 break
     unique, counts = np.unique(quality, return_counts=True)
+    df = pd.DataFrame({"quality": quality, "population": population})
+    group = df.groupby('quality')
+    agg = group.aggregate({'population': 'sum'})
+    data = []
+    for i in range(0, 5):
+        if i in agg.index:
+            data.append(int(agg.loc[i, "population"])) # type: ignore
+        else:
+            data.append(0)
     return {
         "labels": ["sehr gut", "gut", "ausreichend", "mangelhaft", "ungenügend"],
         "dataset": {
             "barPercentage": 0.5,
             "barThickness": 6,
             "maxBarThickness": 8,
-            "data": counts.tolist(),
+            "data": data,
         }
     }
 

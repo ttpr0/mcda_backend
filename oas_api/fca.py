@@ -9,7 +9,7 @@ import numpy as np
 import config
 
 
-async def calcFCA(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], ranges: list[float], range_factors: list[float], mode: str = "isochrones", travel_mode: str = "driving-car") -> list[float]:
+async def calcFCA(population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], decay: dict, travel_mode: str = "driving-car") -> list[float]:
     header = {'Content-Type': 'application/json'}
     body = {
         "supply": {
@@ -20,11 +20,7 @@ async def calcFCA(population_locations: list[tuple[float, float]], population_we
             "demand_locations": population_locations,
             "demand_weights": population_weights,
         },
-        "distance_decay": {
-            "decay_type": "hybrid",
-            "ranges": ranges,
-            "range_factors": range_factors
-        },
+        "distance_decay": decay,
         "routing": {
             "profile": travel_mode,
             "range_type": "time",
@@ -36,7 +32,6 @@ async def calcFCA(population_locations: list[tuple[float, float]], population_we
             "scale_range": [0, 100],
             "no_data_value": -9999,
         },
-        "mode": mode,
     }
     loop = asyncio.get_running_loop()
     data = json.dumps(body)
