@@ -91,7 +91,7 @@ def build_driving_car(store: bool = True) -> pyaccess.Graph:
     graph.reorder_nodes(ordering)
     pyaccess.util.reorder_graph_data(nodes, edges, ordering)
     # build weighting
-    weight = pyaccess.build_fastest_weighting(graph)
+    weight = pyaccess.build_fastest_weighting(graph, edges)
     graph.add_weighting("time", weight)
     # store graph
     if store:
@@ -111,7 +111,7 @@ def build_walking_foot(store: bool = True) -> pyaccess.Graph:
     graph.reorder_nodes(ordering)
     pyaccess.util.reorder_graph_data(nodes, edges, ordering)
     # build weighting
-    weight = pyaccess.build_fastest_weighting(graph)
+    weight = pyaccess.build_fastest_weighting(graph, edges)
     graph.add_weighting("time", weight)
     # store graph
     if store:

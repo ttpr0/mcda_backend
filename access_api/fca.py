@@ -12,6 +12,6 @@ async def calcFCA(population_locations: list[tuple[float, float]], population_we
     profile = PROFILES.get_profile(travel_mode)
     if profile is None:
         raise ValueError(f"Invalid profile {travel_mode}.")
-    decay = pyaccess.hybrid_decay(ranges, range_factors)
-    arr = profile.calc_2sfca(population_locations, population_weights, facility_locations, facility_weights, decay)
+    decay = pyaccess.hybrid_decay([int(i) for i in ranges], range_factors)
+    arr = profile.calc_2sfca(population_locations, population_weights, facility_locations, [int(i) for i in facility_weights], decay)
     return arr.tolist()
