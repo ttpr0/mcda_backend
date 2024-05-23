@@ -43,4 +43,8 @@ async def calcMultiCriteria(population_locations: list[tuple[float, float]], pop
                 continue
             multi[j] += weight * reach[j]
         access[name] = reach.tolist()
+    multi = access["multiCriteria"]
+    for j in range(len(population_locations)):
+        if multi[j] <= 0:
+            multi[j] = -9999
     return access

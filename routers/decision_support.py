@@ -1,12 +1,14 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import Response
 from pydantic import BaseModel
 from shapely import Polygon
 from typing import Annotated, cast
 import asyncio
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 
 from models.population import get_population
 from models.facilities import get_facility
@@ -118,15 +120,18 @@ async def stat_1_api(user: Annotated[User, Depends(get_current_user)]):
             data.append(int(agg.loc[i, "population"])) # type: ignore
         else:
             data.append(0)
-    return {
-        "labels": labels,
-        "dataset": {
-            "barPercentage": 0.5,
-            "barThickness": 6,
-            "maxBarThickness": 8,
-            "data": data,
-        }
-    }
+    # create plotly plot
+    fig = go.Figure()
+    fig.add_bar(x=labels, y=data)
+    fig.update_layout(
+        xaxis={"title": 'Anzahl der Infrastrukturarten'},
+        yaxis={"title": 'Bevölkerungsanzahl'},
+        margin=dict(l=10, r=10, t=10, b=10),
+        minreducedwidth=250,
+        minreducedheight=250,
+        autosize= True,
+    )
+    return Response(content=fig.to_json(), media_type="application/json")
 
 class AnalysisRequest(BaseModel):
     facility: str
@@ -161,15 +166,18 @@ async def stat_2_api(req: AnalysisRequest, user: Annotated[User, Depends(get_cur
             data.append(int(agg.loc[i, "population"])) # type: ignore
         else:
             data.append(0)
-    return {
-        "labels": ["sehr gut", "gut", "ausreichend", "mangelhaft", "ungenügend"],
-        "dataset": {
-            "barPercentage": 0.5,
-            "barThickness": 6,
-            "maxBarThickness": 8,
-            "data": data,
-        }
-    }
+    # create plotly plot
+    fig = go.Figure()
+    fig.add_bar(x=["sehr gut", "gut", "ausreichend", "mangelhaft", "ungenügend"], y=data)
+    fig.update_layout(
+        xaxis={"title": 'Qualität der Versorgung'},
+        yaxis={"title": 'Bevölkerungsanzahl'},
+        margin=dict(l=10, r=10, t=10, b=10),
+        minreducedwidth=250,
+        minreducedheight=250,
+        autosize= True,
+    )
+    return Response(content=fig.to_json(), media_type="application/json")
 
 @router.post("/analysis/stat_3")
 async def stat_3_api(req: AnalysisRequest, user: Annotated[User, Depends(get_current_user)]):
@@ -177,31 +185,42 @@ async def stat_3_api(req: AnalysisRequest, user: Annotated[User, Depends(get_cur
     values: list[float] = access[req.facility]
     numbers = np.random.randint(0, 10, (len(values),))
     unique, counts = np.unique(numbers, return_counts=True)
-    return {
-        "labels": [str(i) for i in list(reversed(unique.tolist()))],
-        "dataset": {
-            "barPercentage": 0.5,
-            "barThickness": 6,
-            "maxBarThickness": 8,
-            "data": list(reversed(counts.tolist())),
-        }
-    }
+    # create plotly plot
+    fig = go.Figure()
+    fig.add_bar(x=[str(i) for i in list(reversed(unique.tolist()))], y=list(reversed(counts.tolist())))
+    fig.update_layout(
+        xaxis={"title": 'Anzahl der Versorgungspunkte'},
+        yaxis={"title": 'Bevölkerungsanzahl'},
+        margin=dict(l=10, r=10, t=10, b=10),
+        minreducedwidth=250,
+        minreducedheight=250,
+        autosize= True,
+    )
+    return Response(content=fig.to_json(), media_type="application/json")
 
 @router.post("/analysis/hotspot")
 async def hotspot_api(user: Annotated[User, Depends(get_current_user)]):
     access = STATE[user.get_name()]["accessibilities"]
     population = access["population"]
     multi = access["multiCriteria"]
-    data = []
+    xs = []
+    ys = []
     for i in range(len(population)):
         x = population[i]
         y = multi[i]
         if y == -9999:
             continue
-        data.append({"x": x, "y": y})
-    return {
-        "label": "counts1",
-        "backgroundColor": "blue",
-        "data": data
-    }
-
+        xs.append(x)
+        ys.append(y)
+    # create plotly plot
+    fig = go.Figure()
+    fig.add_scatter(x=xs, y=ys, mode='markers')
+    fig.update_layout(
+        xaxis={"title": 'Bevölkerung der Bevölkerungszelle'},
+        yaxis={"title": 'Versorgung der Bevölkerungszelle'},
+        margin=dict(l=10, r=10, t=10, b=10),
+        minreducedwidth=250,
+        minreducedheight=250,
+        autosize= True,
+    )
+    return Response(content=fig.to_json(), media_type="application/json")
