@@ -20,3 +20,10 @@ def get_dummy_decay(decay: dict) -> IDistanceDecay:
     if d is None:
         raise ValueError(f"Invalid decay parameters {decay}.")
     return d
+
+def get_max_distance(decay: dict) -> int:
+    if "max_range" in decay:
+        return int(decay["max_range"])
+    if "ranges" in decay:
+        return int(decay["ranges"][-1])
+    raise ValueError(f"Invalid decay parameters {decay}.")

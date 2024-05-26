@@ -1,9 +1,10 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import logging
+from typing import Annotated
 
 import config
 from routers.nearest_query import router as nearest_router
@@ -12,6 +13,7 @@ from routers.spatial_analysis import router as spatial_analysis_router
 from routers.app_state import router as app_state_router
 from routers.others import router as others_router
 from routers.decision_support import router as decision_support_router
+from routers.state import get_state, SessionStorage
 
 app = FastAPI()
 
@@ -22,6 +24,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def startup_event():
+    state = get_state()
+    state.periodically_clear(60 * 60, 24 * 60)
+
+app.add_event_handler("startup", startup_event)
 
 app.include_router(nearest_router, prefix="/v1/accessibility/nearest_query")
 

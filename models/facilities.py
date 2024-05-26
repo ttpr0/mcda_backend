@@ -10,6 +10,7 @@ from . import ENGINE, get_table
 def get_facility(facility_name: str, envelop: Polygon) -> tuple[list[tuple[float, float]], list[float]]:
     locations = []
     weights = []
+    location_set = set()
 
     envelop_wkb = from_shape(envelop, srid=4326)
 
@@ -40,6 +41,9 @@ def get_facility(facility_name: str, envelop: Polygon) -> tuple[list[tuple[float
             if row[1] == 0:
                 continue
             point = to_shape(row[0])
+            if (point.x, point.y) in location_set:
+                continue
+            location_set.add((point.x, point.y))
             locations.append((point.x, point.y))
             weights.append(row[1])
     return locations, weights
