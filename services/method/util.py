@@ -1,4 +1,21 @@
+# Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
+
 import pyaccess
+
+
+class Infrastructure():
+    weight: float
+    decay: dict
+    cutoffs: list[int]
+    locations: list[tuple[float, float]]
+    weights: list[float]
+
+    def __init__(self, weight: float, decay: dict, cutoffs: list[int], locations: list[tuple[float, float]], weights: list[float]):
+        self.weight = weight
+        self.decay = decay
+        self.cutoffs = cutoffs
+        self.locations = locations
+        self.weights = weights  
 
 def get_distance_decay(param: dict) -> pyaccess._pyaccess_ext.IDistanceDecay | None:
     try:

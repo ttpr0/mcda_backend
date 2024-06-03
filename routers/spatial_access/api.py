@@ -13,10 +13,10 @@ from models.physicians import get_physicians
 from models.planning_areas import get_planning_area
 from models.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
 from helpers.util import get_extent
-from helpers.depends import get_current_user, User
+from filters.user import get_current_user, User
 
 
-router = APIRouter()
+ROUTER = APIRouter()
 
 class SpatialAccessRequest(BaseModel):
     # query extent
@@ -32,8 +32,11 @@ class SpatialAccessRequest(BaseModel):
     travel_mode: str
     decay_type: str
 
-@router.post("/grid")
-async def spatial_access_api(req: SpatialAccessRequest, user: Annotated[User, Depends(get_current_user)]):
+@ROUTER.post("/grid")
+async def spatial_access_api(
+        req: SpatialAccessRequest,
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     query = get_planning_area(req.planning_area)
     if query is None:
         return {"error": "invalid request"}

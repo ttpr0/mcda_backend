@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from access_api.decay import get_distance_decay
+from services.method.util import get_distance_decay
 
 class IDistanceDecay(Protocol):
     def get_distance_weight(self, distance: int) -> float:

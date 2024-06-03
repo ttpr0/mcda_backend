@@ -1,6 +1,7 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
 from __future__ import annotations
+
 import string
 import random
 from datetime import datetime, timedelta
@@ -13,8 +14,22 @@ def _generate_session_id() -> str:
     sid = ''.join(random.choice(letters) for i in range(10))
     return sid
 
+class Session:
+    _data: dict[str, Any]
+    def __init__(self, data: dict[str, Any]):
+        self._data = data
+
+    def __getitem__(self, key: str) -> Any:
+        return self._data[key]
+    
+    def __setitem__(self, key: str, value: Any):
+        self._data[key] = value
+
+    def commit(self):
+        pass
+
 class SessionStorage:
-    _sessions: dict[tuple[str, str], tuple[datetime, Any]]
+    _sessions: dict[tuple[str, str], tuple[datetime, dict[str, Any]]]
 
     def __init__(self):
         self._sessions = {}
@@ -38,27 +53,20 @@ class SessionStorage:
             session_id = _generate_session_id()
             if (user, session_id) not in self._sessions:
                 now = datetime.now()
-                self._sessions[(user, session_id)] = (now, None)
+                self._sessions[(user, session_id)] = (now, {})
                 return session_id
 
     def has_session(self, user: str, session_id: str) -> bool:
         return (user, session_id) in self._sessions
 
-    def set_session(self, user: str, session_id: str, value: Any) -> None:
-        """Returns the session object
-        """
-        if (user, session_id) not in self._sessions:
-            raise Exception("Session not found")
-        self._sessions[(user, session_id)] = (datetime.now(), value)
-
-    def get_session(self, user: str, session_id: str) -> Any:
+    def get_session(self, user: str, session_id: str) -> Session:
         """Returns the session object
         """
         if (user, session_id) not in self._sessions:
             raise Exception("Session not found")
         _, session = self._sessions[(user, session_id)]
         self._sessions[(user, session_id)] = (datetime.now(), session)
-        return session
+        return Session(session)
 
     def remove_session(self, user: str, session_id: str):
         if (user, session_id) not in self._sessions:

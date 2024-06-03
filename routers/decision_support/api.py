@@ -13,17 +13,18 @@ import plotly.graph_objects as go
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent, get_query_from_extent, get_buffered_query
-from helpers.depends import get_current_user, User
-from access_api.multi_criteria import Infrastructure, calcMultiCriteria
-from access_api.set_coverage import calcSetCoverage
+from filters.user import get_current_user, User
 from helpers.dummy_decay import get_dummy_decay
-from routers.state import get_state, SessionStorage
-from .session import DecisionSupportSession
+from services.method import get_method_service, IMethodService, Infrastructure
+from services.session import get_state, SessionStorage, Session
 
 ROUTER = APIRouter()
 
 @ROUTER.post("/create_session")
-async def create_session(state: Annotated[SessionStorage, Depends(get_state)], user: Annotated[User, Depends(get_current_user)]):
+async def create_session(
+        state: Annotated[SessionStorage, Depends(get_state)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     session_id = state.new_session(user.get_name())
     return {
         "session_id": session_id
@@ -48,7 +49,12 @@ class MultiCriteriaRequest(BaseModel):
     travel_mode: str
 
 @ROUTER.post("/grid")
-async def decision_support_api(req: MultiCriteriaRequest, state: Annotated[SessionStorage, Depends(get_state)], user: Annotated[User, Depends(get_current_user)]):
+async def decision_support_api(
+        req: MultiCriteriaRequest,
+        method_service: Annotated[IMethodService, Depends(get_method_service)],
+        state: Annotated[SessionStorage, Depends(get_state)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     query = get_query_from_extent(req.envelop)
     if req.population_indizes is None or req.population_type is None:
         population_locations, utm_points, population_weights = get_population(query)
@@ -61,7 +67,7 @@ async def decision_support_api(req: MultiCriteriaRequest, state: Annotated[Sessi
         facility_points, facility_weights = get_facility(param.facility_type, buffer_query)
         infrastructures[name] = Infrastructure(param.infrastructure_weight, param.distance_decay, param.cutoff_points, facility_points, facility_weights)
 
-    task = asyncio.create_task(calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
+    task = asyncio.create_task(method_service.calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
 
     features: list = []
     minx, miny, maxx, maxy = get_extent(utm_points)
@@ -75,12 +81,13 @@ async def decision_support_api(req: MultiCriteriaRequest, state: Annotated[Sessi
 
     accessibilities, counts = await task
 
-    session = DecisionSupportSession()
-    session.set_accessibilities(accessibilities)
-    session.set_counts(counts)
-    session.set_infrastructures(infrastructures)
-    session.set_population((population_locations, population_weights))
-    state.set_session(user.get_name(), req.session_id, session)
+    # update session
+    session = state.get_session(user.get_name(), req.session_id)
+    session["accessibilities"] = accessibilities
+    session["counts"] = counts
+    session["infrastructures"] = infrastructures
+    session["population"]  = (population_locations, population_weights)
+    session.commit()
 
     for name, array in accessibilities.items():
         for i, _ in enumerate(utm_points):
@@ -101,13 +108,18 @@ class Analysis1Request(BaseModel):
     session_id: str
 
 @ROUTER.post("/analysis/stat_1")
-async def stat_1_api(req: Analysis1Request, state: Annotated[SessionStorage, Depends(get_state)], user: Annotated[User, Depends(get_current_user)]):
+async def stat_1_api(
+        req: Analysis1Request,
+        state: Annotated[SessionStorage, Depends(get_state)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     """Computes the amount of different facility-types serving each population-cell
     """
     # get session state
-    session: DecisionSupportSession = state.get_session(user.get_name(), req.session_id)
-    access = session.get_accessibilities()
-    _, population = session.get_population()
+    session = state.get_session(user.get_name(), req.session_id)
+    access: dict[str, list[float]] = session["accessibilities"]
+    population: list[int]
+    _, population = session["population"]
     # compute statistics
     amount = np.zeros((len(population,)), dtype=np.int32)
     facility_count = 0
@@ -149,16 +161,21 @@ class Analysis2Request(BaseModel):
     facility: str
 
 @ROUTER.post("/analysis/stat_2")
-async def stat_2_api(req: Analysis2Request, state: Annotated[SessionStorage, Depends(get_state)], user: Annotated[User, Depends(get_current_user)]):
+async def stat_2_api(
+        req: Analysis2Request,
+        state: Annotated[SessionStorage, Depends(get_state)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     """Computes the quality of supply serving each population cell for each infrastructure
     """
     # get session state
-    session: DecisionSupportSession = state.get_session(user.get_name(), req.session_id)
-    access = session.get_accessibilities()
+    session = state.get_session(user.get_name(), req.session_id)
+    access: dict[str, list[float]] = session["accessibilities"]
     values: list[float] = access[req.facility]
-    _, population = session.get_population()
-    infras = session.get_infrastructures()
-    infra: Infrastructure = infras[req.facility]
+    population: list[int]
+    _, population = session["population"]
+    infras: dict[str, Infrastructure] = session["infrastructures"]
+    infra = infras[req.facility]
     # compute statistics
     decay = get_dummy_decay(infra.decay)
     cutoff_points = [decay.get_distance_weight(int(i)) - 0.0001 for i in infra.cutoffs]
@@ -198,11 +215,16 @@ class Analysis3Request(BaseModel):
     facility: str
 
 @ROUTER.post("/analysis/stat_3")
-async def stat_3_api(req: Analysis3Request, state: Annotated[SessionStorage, Depends(get_state)], user: Annotated[User, Depends(get_current_user)]):
+async def stat_3_api(
+        req: Analysis3Request,
+        state: Annotated[SessionStorage, Depends(get_state)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     # get session state
-    session: DecisionSupportSession = state.get_session(user.get_name(), req.session_id)
-    counts = session.get_counts()
-    _, population = session.get_population()
+    session = state.get_session(user.get_name(), req.session_id)
+    counts: dict[str, list[int]] = session["counts"]
+    population: list[int]
+    _, population = session["population"]
     values: list[int] = counts[req.facility]
     # compute statistics
     df = pd.DataFrame({"counts": values, "population": population})
@@ -230,12 +252,17 @@ class HotspotRequest(BaseModel):
     session_id: str
 
 @ROUTER.post("/analysis/hotspot")
-async def hotspot_api(req: HotspotRequest, state: Annotated[SessionStorage, Depends(get_state)], user: Annotated[User, Depends(get_current_user)]):
+async def hotspot_api(
+        req: HotspotRequest,
+        state: Annotated[SessionStorage, Depends(get_state)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     # get session state
-    session: DecisionSupportSession = state.get_session(user.get_name(), req.session_id)
-    access = session.get_accessibilities()
+    session = state.get_session(user.get_name(), req.session_id)
+    access: dict[str, list[float]] = session["accessibilities"]
     multi: list[float] = access["multiCriteria"]
-    _, population = session.get_population()
+    population: list[int]
+    _, population = session["population"]
     # compute statistics
     xs = []
     ys = []
@@ -268,7 +295,10 @@ class FeaturesRequest(BaseModel):
     travel_mode: str
 
 @ROUTER.post("/features")
-async def scenario_features_api(req: FeaturesRequest, user: Annotated[User, Depends(get_current_user)]):
+async def scenario_features_api(
+        req: FeaturesRequest,
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     query = get_query_from_extent(req.envelop)
 
     data = {}
@@ -312,7 +342,11 @@ class ScenarioRequest(BaseModel):
     travel_mode: str
 
 @ROUTER.post("/scenario")
-async def scenario_api(req: ScenarioRequest, user: Annotated[User, Depends(get_current_user)]):
+async def scenario_api(
+        req: ScenarioRequest,
+        method_service: Annotated[IMethodService, Depends(get_method_service)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     query = get_query_from_extent(req.envelop)
     if req.population_indizes is None or req.population_type is None:
         population_locations, utm_points, population_weights = get_population(query)
@@ -325,7 +359,7 @@ async def scenario_api(req: ScenarioRequest, user: Annotated[User, Depends(get_c
         facility_points = param.facility_locations
         infrastructures[name] = Infrastructure(param.infrastructure_weight, param.distance_decay, param.cutoff_points, facility_points, [])
 
-    task = asyncio.create_task(calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
+    task = asyncio.create_task(method_service.calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
 
     features: list = []
     minx, miny, maxx, maxy = get_extent(utm_points)
@@ -371,7 +405,11 @@ class OptimizationRequest(BaseModel):
     travel_mode: str
 
 @ROUTER.post("/optimization")
-async def scenario_optimization_api(req: OptimizationRequest, user: Annotated[User, Depends(get_current_user)]):
+async def scenario_optimization_api(
+        req: OptimizationRequest,
+        method_service: Annotated[IMethodService, Depends(get_method_service)],
+        user: Annotated[User, Depends(get_current_user)]
+    ):
     query = get_query_from_extent(req.envelop)
     if req.population_indizes is None or req.population_type is None:
         population_locations, _, population_weights = get_population(query)
@@ -380,7 +418,7 @@ async def scenario_optimization_api(req: OptimizationRequest, user: Annotated[Us
 
     result = {}
     for name, param in req.infrastructures.items():
-        r = await calcSetCoverage(population_locations, population_weights, param.facility_locations, param.max_range, param.coverage_target, req.travel_mode)
+        r = await method_service.calcSetCoverage(population_locations, population_weights, param.facility_locations, param.max_range, param.coverage_target, req.travel_mode)
         result[name] = r
 
     return result

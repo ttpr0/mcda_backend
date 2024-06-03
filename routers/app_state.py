@@ -10,7 +10,7 @@ from models.population import get_available_population
 from models.facilities import get_available_facilities
 from models.physicians import get_available_physicians
 from models.planning_areas import get_available_supply_levels, get_available_planning_areas
-from helpers.depends import get_current_user, User
+from filters.user import get_current_user, User
 
 router = APIRouter()
 

@@ -10,7 +10,7 @@ from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
-from helpers.depends import get_current_user, User
+from filters.user import get_current_user, User
 from oas_api.aggregate_query import calcAggregateQuery
 from oas_api.gravity import calcGravity
 

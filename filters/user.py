@@ -9,7 +9,7 @@ import jwt
 
 import config
 
-def decode_token(token: str) -> Any:
+def _decode_token(token: str) -> Any:
     try:
         payload = jwt.decode(token, config.JWT_KEY, algorithms=[config.JWT_ALGORITHM])
     except:
@@ -32,11 +32,11 @@ class User:
         return self.group
 
 
-reuseable_oauth = OAuth2PasswordBearer(
+_reuseable_oauth = OAuth2PasswordBearer(
     tokenUrl="",
     scheme_name="JWT",
 )
 
-async def get_current_user(token: Annotated[str, Depends(reuseable_oauth)]) -> User:
-    subject = decode_token(token)
+async def get_current_user(token: Annotated[str, Depends(_reuseable_oauth)]) -> User:
+    subject = _decode_token(token)
     return User(subject["id"], subject["group"])

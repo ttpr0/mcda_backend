@@ -13,7 +13,7 @@ from routers.spatial_analysis import router as spatial_analysis_router
 from routers.app_state import router as app_state_router
 from routers.others import router as others_router
 from routers.decision_support import router as decision_support_router
-from routers.state import get_state, SessionStorage
+from services.session import get_state, SessionStorage
 
 app = FastAPI()
 

@@ -11,7 +11,7 @@ from typing import Annotated
 from models.population import get_population
 from models.facilities import get_facility
 from helpers.util import get_extent
-from helpers.depends import get_current_user, User
+from filters.user import get_current_user, User
 from oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2
 
 
