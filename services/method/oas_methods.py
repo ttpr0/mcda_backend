@@ -5,12 +5,13 @@ import json
 import requests
 from fastapi import HTTPException, status
 
-import config
 from .util import Infrastructure
 
 class OASMethodService:
-    def __init__(self):
-        pass
+    _oas_url: str
+
+    def __init__(self, oas_url: str):
+        self._oas_url = oas_url
 
     async def calcFCA(self, population_locations: list[tuple[float, float]], population_weights: list[int], facility_locations: list[tuple[float, float]], facility_weights: list[float], decay: dict, travel_mode: str = "driving-car") -> list[float]:
         header = {'Content-Type': 'application/json'}
@@ -38,7 +39,7 @@ class OASMethodService:
         }
         loop = asyncio.get_running_loop()
         data = json.dumps(body)
-        response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/accessibility/enhanced_2sfca", data=data, headers=header))
+        response = await loop.run_in_executor(None, lambda: requests.post(self._oas_url + "/v1/accessibility/enhanced_2sfca", data=data, headers=header))
         accessibilities = response.json()
         arr: list[float] = accessibilities["access"]
         return arr
@@ -75,7 +76,7 @@ class OASMethodService:
             "return_all": True,
         }
         loop = asyncio.get_running_loop()
-        response = await loop.run_in_executor(None, lambda: requests.post(config.ACCESSIBILITYSERVICE_URL + "/v1/multicriteria/multi", json=body, headers=header))
+        response = await loop.run_in_executor(None, lambda: requests.post(self._oas_url + "/v1/multicriteria/multi", json=body, headers=header))
         accessibilities = response.json()
         return accessibilities["access"]
 

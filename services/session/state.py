@@ -40,10 +40,13 @@ class SessionStorage:
     async def _clear_outdated_sessions(self, iter_seconds: int, timeout_minutes: int):
         while True:
             now = datetime.now()
+            to_be_deleted = []
             for user, session_id in self._sessions:
                 time, _ = self._sessions[(user, session_id)]
                 if now - time > timedelta(minutes=timeout_minutes):
-                    del self._sessions[(user, session_id)]
+                    to_be_deleted.append((user, session_id))
+            for key in to_be_deleted:
+                del self._sessions[key]
             await asyncio.sleep(iter_seconds)
 
     def new_session(self, user: str) -> str:
@@ -73,8 +76,15 @@ class SessionStorage:
             raise Exception("Session not found")
         del self._sessions[(user, session_id)]
 
-STATE = SessionStorage()
+STATE = None
+
+def init_state():
+    global STATE
+    STATE = SessionStorage()
+    STATE.periodically_clear(60 * 60, 24 * 60)
 
 def get_state() -> SessionStorage:
     global STATE
+    if STATE is None:
+        raise ValueError("This should not have happened.")
     return STATE

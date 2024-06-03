@@ -1,10 +1,12 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import logging
-from typing import Annotated
+
+import uvicorn.config
+import uvicorn.logging
 
 import config
 from routers.nearest_query import router as nearest_router
@@ -13,7 +15,9 @@ from routers.spatial_analysis import router as spatial_analysis_router
 from routers.app_state import router as app_state_router
 from routers.others import router as others_router
 from routers.decision_support import router as decision_support_router
-from services.session import get_state, SessionStorage
+from services.session import init_state
+from services.profile import init_profile_manager
+from helpers.log_formatter import ColorFormatter
 
 app = FastAPI()
 
@@ -26,60 +30,31 @@ app.add_middleware(
 )
 
 def startup_event():
-    state = get_state()
-    state.periodically_clear(60 * 60, 24 * 60)
+    logging.info("Start loading state...")
+    init_state()
+    logging.info("Start loading profiles...")
+    init_profile_manager()
 
 app.add_event_handler("startup", startup_event)
 
 app.include_router(nearest_router, prefix="/v1/accessibility/nearest_query")
-
 app.include_router(spatial_access_router, prefix="/v1/spatial_access")
-
 app.include_router(decision_support_router, prefix="/v1/decision_support")
-
 app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
-
 app.include_router(app_state_router, prefix="/v1/state")
-
 app.include_router(others_router, prefix="/v1")
 
 
-class ColorFormatter(logging.Formatter):
-    """Logging Formatter to add colors and count warning / errors"""
-
-    grey = "\x1b[90m"
-    green = "\x1b[92m"
-    yellow = "\x1b[93m"
-    red = "\x1b[91m"
-    reset = "\x1b[0m"
-
-    COLORS = {
-        logging.DEBUG: grey,
-        logging.INFO: green,
-        logging.WARNING: yellow,
-        logging.ERROR: red,
-        logging.CRITICAL: red
-    }
-
-    def format(self, record):
-        record.levelname = 'WARN' if record.levelname == 'WARNING' else record.levelname
-        record.levelname = 'ERROR' if record.levelname == 'CRITICAL' else record.levelname
-        log_clr = self.COLORS[record.levelno]
-        formatter = logging.Formatter(
-            f"{log_clr}%(levelname)s{self.reset}: %(asctime)s -> %(message)s")
-        return formatter.format(record)
-
 
 if __name__ == '__main__':
-    logger = logging.getLogger("main")
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
-    # handler.setFormatter(logging.Formatter("%(levelname)s - %(asctime)s - %(message)s"))
     handler.setFormatter(ColorFormatter())
     logger.addHandler(handler)
 
-    logger.info("Start loading population data...")
-    logger.info("Done loading population data.")
-    logger.info("AccessibilityService ready!")
-    # uvicorn.run("main:app", host=config.API_HOST, port=config.API_PORT, reload=True)
-    uvicorn.run("main:app", host=config.API_HOST, port=config.API_PORT)
+    log_config = uvicorn.config.LOGGING_CONFIG
+    log_config["formatters"]["access"]["fmt"] = "%(levelprefix)s %(asctime)s - %(client_addr)s - \"%(request_line)s\" %(status_code)s"
+    log_config["formatters"]["default"]["fmt"] = "%(levelprefix)s %(asctime)s - %(message)s"
+
+    uvicorn.run("main:app", host=config.API_HOST, port=config.API_PORT, log_config=log_config)

@@ -157,3 +157,29 @@ async def get_physicians(user: Annotated[User, Depends(get_current_user)]):
     ```
     """
     return get_available_physicians()
+
+@router.get("/ui_settings")
+async def get_ui_settings(user: Annotated[User, Depends(get_current_user)]):
+    return {
+        "storeParameters": False,
+        "loadParameters": False
+    }
+
+@router.get("/analysis_settings")
+async def get_analysis_settings(user: Annotated[User, Depends(get_current_user)]):
+    return {
+        "statistics": {
+            "a": True,
+            "b": True,
+            "c": True
+        },
+        "hotspot": True,
+        "scenario": True
+    }
+
+@router.get("/range_limits")
+async def get_range_limits(user: Annotated[User, Depends(get_current_user)]):
+    return {
+        "min": 0,
+        "max": 70
+    }

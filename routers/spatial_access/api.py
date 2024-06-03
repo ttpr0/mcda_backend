@@ -7,13 +7,13 @@ import asyncio
 import time
 from typing import Annotated
 
-from access_api.fca import calcFCA
 from models.population import get_population
 from models.physicians import get_physicians
 from models.planning_areas import get_planning_area
 from models.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
 from helpers.util import get_extent
 from filters.user import get_current_user, User
+from services.method import get_method_service, IMethodService, Infrastructure
 
 
 ROUTER = APIRouter()
@@ -35,6 +35,7 @@ class SpatialAccessRequest(BaseModel):
 @ROUTER.post("/grid")
 async def spatial_access_api(
         req: SpatialAccessRequest,
+        method_service: Annotated[IMethodService, Depends(get_method_service)],
         user: Annotated[User, Depends(get_current_user)]
     ):
     query = get_planning_area(req.planning_area)
@@ -55,7 +56,7 @@ async def spatial_access_api(
     if not is_valid_travel_mode(travel_mode):
         travel_mode = get_default_travel_mode()
 
-    task = asyncio.create_task(calcFCA(
+    task = asyncio.create_task(method_service.calcFCA(
         points, weights, facility_points, facility_weights, distance_decay, travel_mode))
 
     minx, miny, maxx, maxy = get_extent(utm_points)
