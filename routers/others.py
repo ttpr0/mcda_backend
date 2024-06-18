@@ -13,10 +13,10 @@ from functions.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
 from services.database import AsyncSession, get_db_session
-from oas_api.fca import calcFCA
-from oas_api.n_nearest_query import calcNearestQuery
-from oas_api.aggregate_query import calcAggregateQuery
-from oas_api.gravity import calcGravity
+from services.method.oas_api.fca import calcFCA
+from services.method.oas_api.n_nearest_query import calcNearestQuery
+from services.method.oas_api.aggregate_query import calcAggregateQuery
+from services.method.oas_api.gravity import calcGravity
 from helpers.access import calcFCA3, calcRange
 
 router = APIRouter()

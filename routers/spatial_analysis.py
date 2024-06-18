@@ -12,8 +12,8 @@ from helpers.util import get_extent
 from helpers.responses import GridFeature
 from filters.user import get_current_user, User
 from services.database import AsyncSession, get_db_session
-from oas_api.aggregate_query import calcAggregateQuery
-from oas_api.gravity import calcGravity
+from services.method.oas_api.aggregate_query import calcAggregateQuery
+from services.method.oas_api.gravity import calcGravity
 
 
 router = APIRouter()

@@ -13,7 +13,7 @@ from functions.facilities import get_facility
 from helpers.util import get_extent
 from filters.user import get_current_user, User
 from services.database import AsyncSession, get_db_session
-from oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2
+from services.method.oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2
 
 
 class GridFeature:
