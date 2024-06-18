@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from models.population import get_population
+from models.population import get_population_values
 from models.facilities import get_facility
-from helpers.util import get_extent, get_query_from_extent, get_buffered_query
+from helpers.util import get_query_from_extent, get_buffered_query
 from filters.user import get_current_user, User
 from helpers.dummy_decay import get_dummy_decay
 from services.method import get_method_service, IMethodService, Infrastructure
@@ -44,7 +44,8 @@ class MultiCriteriaRequest(BaseModel):
     envelop: tuple[float, float, float, float]
     # population parameters
     population_type: str
-    population_indizes: list[str]|None
+    population_grid_indices: list[int]
+    population_indizes: list[str] | None
     # travel parameters
     travel_mode: str
 
@@ -55,12 +56,12 @@ async def decision_support_api(
         state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
-    query = get_query_from_extent(req.envelop)
     if req.population_indizes is None or req.population_type is None:
-        population_locations, utm_points, population_weights = get_population(query)
+        population_locations, population_weights = get_population_values(indices=req.population_grid_indices)
     else:
-        population_locations, utm_points, population_weights = get_population(query, req.population_type, req.population_indizes)
+        population_locations, population_weights = get_population_values(indices=req.population_grid_indices, typ=req.population_type, age_groups=req.population_indizes)
 
+    query = get_query_from_extent(req.envelop)
     infrastructures = {}
     for name, param in req.infrastructures.items():
         buffer_query = get_buffered_query(query, req.travel_mode, param.distance_decay)
@@ -68,16 +69,6 @@ async def decision_support_api(
         infrastructures[name] = Infrastructure(param.infrastructure_weight, param.distance_decay, param.cutoff_points, facility_points, facility_weights)
 
     task = asyncio.create_task(method_service.calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
-
-    features: list = []
-    minx, miny, maxx, maxy = get_extent(utm_points)
-    for p, w in zip(utm_points, population_weights):
-        features.append({
-            "coordinates": [p[0], p[1]],
-            "properties": {
-                "population": w
-            }
-        })
 
     accessibilities, counts = await task
 
@@ -89,20 +80,18 @@ async def decision_support_api(
     session["population"]  = (population_locations, population_weights)
     session.commit()
 
+    features: list = []
+    for w in population_weights:
+        features.append({
+            "population": w
+        })
     for name, array in accessibilities.items():
-        for i, _ in enumerate(utm_points):
+        for i, _ in enumerate(array):
             feature = features[i]
             access: float = float(array[i])
-            feature["properties"][name] = access
+            feature[name] = access
 
-    extend = [minx-50, miny-50, maxx+50, maxy+50]
-    dx = extend[2] - extend[0]
-    dy = extend[3] - extend[1]
-    size = [int(dx/100), int(dy/100)]
-
-    crs = "EPSG:25832"
-
-    return {"features": features, "crs": crs, "extend": extend, "size": size}
+    return features
 
 class Analysis1Request(BaseModel):
     session_id: str
@@ -331,13 +320,9 @@ class InfrastructureParams2(BaseModel):
     facility_locations: list[tuple[float, float]]
 
 class ScenarioRequest(BaseModel):
+    session_id: str
     # infrastructure parameters
     infrastructures: dict[str, InfrastructureParams2]
-    # query extent
-    envelop: tuple[float, float, float, float]
-    # population parameters
-    population_type: str
-    population_indizes: list[str]|None
     # travel parameters
     travel_mode: str
 
@@ -345,48 +330,34 @@ class ScenarioRequest(BaseModel):
 async def scenario_api(
         req: ScenarioRequest,
         method_service: Annotated[IMethodService, Depends(get_method_service)],
+        state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
-    query = get_query_from_extent(req.envelop)
-    if req.population_indizes is None or req.population_type is None:
-        population_locations, utm_points, population_weights = get_population(query)
-    else:
-        population_locations, utm_points, population_weights = get_population(query, req.population_type, req.population_indizes)
-
+    # get session state
+    session = state.get_session(user.get_name(), req.session_id)
+    population_locations: list[tuple[float, float]]
+    population_weights: list[int]
+    population_locations, population_weights = session["population"]
+    # get facility data
     infrastructures = {}
     for name, param in req.infrastructures.items():
-        buffer_query = get_buffered_query(query, req.travel_mode, param.distance_decay)
         facility_points = param.facility_locations
         infrastructures[name] = Infrastructure(param.infrastructure_weight, param.distance_decay, param.cutoff_points, facility_points, [])
 
-    task = asyncio.create_task(method_service.calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
+    accessibilities, _ = await method_service.calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode)
 
     features: list = []
-    minx, miny, maxx, maxy = get_extent(utm_points)
-    for p, w in zip(utm_points, population_weights):
+    for p in population_weights:
         features.append({
-            "coordinates": [p[0], p[1]],
-            "properties": {
-                "population": w
-            }
+            "population": p
         })
-
-    accessibilities, _ = await task
-
     for name, array in accessibilities.items():
-        for i, _ in enumerate(utm_points):
+        for i, v in enumerate(array):
             feature = features[i]
             access: float = float(array[i])
-            feature["properties"][name] = access
+            feature[name] = access
 
-    extend = [minx-50, miny-50, maxx+50, maxy+50]
-    dx = extend[2] - extend[0]
-    dy = extend[3] - extend[1]
-    size = [int(dx/100), int(dy/100)]
-
-    crs = "EPSG:25832"
-
-    return {"features": features, "crs": crs, "extend": extend, "size": size}
+    return features
 
 class InfrastructureParams3(BaseModel):
     max_range: int
@@ -394,13 +365,9 @@ class InfrastructureParams3(BaseModel):
     facility_locations: list[tuple[float, float]]
 
 class OptimizationRequest(BaseModel):
+    session_id: str
     # infrastructure parameters
     infrastructures: dict[str, InfrastructureParams3]
-    # query extent
-    envelop: tuple[float, float, float, float]
-    # population parameters
-    population_type: str
-    population_indizes: list[str]|None
     # travel parameters
     travel_mode: str
 
@@ -408,13 +375,14 @@ class OptimizationRequest(BaseModel):
 async def scenario_optimization_api(
         req: OptimizationRequest,
         method_service: Annotated[IMethodService, Depends(get_method_service)],
+        state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
-    query = get_query_from_extent(req.envelop)
-    if req.population_indizes is None or req.population_type is None:
-        population_locations, _, population_weights = get_population(query)
-    else:
-        population_locations, _, population_weights = get_population(query, req.population_type, req.population_indizes)
+    # get session state
+    session = state.get_session(user.get_name(), req.session_id)
+    population_locations: list[tuple[float, float]]
+    population_weights: list[int]
+    population_locations, population_weights = session["population"]
 
     result = {}
     for name, param in req.infrastructures.items():

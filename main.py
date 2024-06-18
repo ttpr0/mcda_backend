@@ -15,6 +15,7 @@ from routers.spatial_analysis import router as spatial_analysis_router
 from routers.app_state import router as app_state_router
 from routers.others import router as others_router
 from routers.decision_support import router as decision_support_router
+from routers.data import router as data_router
 from services.session import init_state
 from services.profile import init_profile_manager
 from helpers.log_formatter import ColorFormatter
@@ -42,6 +43,7 @@ app.include_router(spatial_access_router, prefix="/v1/spatial_access")
 app.include_router(decision_support_router, prefix="/v1/decision_support")
 app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
 app.include_router(app_state_router, prefix="/v1/state")
+app.include_router(data_router, prefix="/v1/data")
 app.include_router(others_router, prefix="/v1")
 
 

@@ -45,3 +45,9 @@ def get_buffered_query(query: Polygon, travel_mode: str, decay: dict) -> Polygon
     project = Transformer.from_crs("epsg:25832", "epsg:4326", always_xy=True).transform
     query_buffer: Polygon = transform(project, utm_query_buffer)
     return query_buffer
+
+def deprecated(func):
+    def wrapped(*args, **kwargs):
+        print(f"DeprecationWarning: Outdated function \"{func.__name__}\" called. Consider updating your code.")
+        return func(*args, **kwargs)
+    return wrapped
