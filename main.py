@@ -9,13 +9,13 @@ import uvicorn.config
 import uvicorn.logging
 
 import config
-from routers.nearest_query import router as nearest_router
 from routers.spatial_access import router as spatial_access_router
-from routers.spatial_analysis import router as spatial_analysis_router
-from routers.app_state import router as app_state_router
-from routers.others import router as others_router
 from routers.decision_support import router as decision_support_router
+from routers.state import router as app_state_router
 from routers.data import router as data_router
+# from routers.spatial_analysis import router as spatial_analysis_router
+# from routers.nearest_query import router as nearest_router
+# from routers.others import router as others_router
 from services.session import init_state
 from services.profile import init_profile_manager
 from services.database import init_database
@@ -41,13 +41,13 @@ async def startup_event():
 
 app.add_event_handler("startup", startup_event)
 
-app.include_router(nearest_router, prefix="/v1/accessibility/nearest_query")
 app.include_router(spatial_access_router, prefix="/v1/spatial_access")
 app.include_router(decision_support_router, prefix="/v1/decision_support")
-app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
 app.include_router(app_state_router, prefix="/v1/state")
 app.include_router(data_router, prefix="/v1/data")
-app.include_router(others_router, prefix="/v1")
+# app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
+# app.include_router(nearest_router, prefix="/v1/accessibility/nearest_query")
+# app.include_router(others_router, prefix="/v1")
 
 if __name__ == '__main__':
     logger = logging.getLogger()

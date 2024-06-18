@@ -1,7 +1,6 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
 from typing import Annotated
-
 from fastapi import APIRouter, Request, HTTPException, Depends
 
 from functions.travel_modes import get_default_timezones
@@ -12,9 +11,9 @@ from functions.planning_areas import get_available_supply_levels, get_available_
 from filters.user import get_current_user, User
 from services.database import AsyncSession, get_db_session
 
-router = APIRouter()
+ROUTER = APIRouter()
 
-@router.get("/facilities")
+@ROUTER.get("/facilities")
 async def get_facilities(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
@@ -42,7 +41,7 @@ async def get_facilities(
     """
     return await get_available_facilities(db)
 
-@router.get("/population")
+@ROUTER.get("/population")
 async def get_population(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
@@ -67,7 +66,7 @@ async def get_population(
     """
     return await get_available_population(db)
 
-@router.post("/time_zones")
+@ROUTER.post("/time_zones")
 async def get_time_zones(
         req: Request,
         user: Annotated[User, Depends(get_current_user)],
@@ -100,7 +99,7 @@ async def get_time_zones(
         raise HTTPException(status_code=404, detail="key 'facilities' not provided")
     return await get_default_timezones(db, data["facilities"]) # type: ignore
 
-@router.get("/supply_levels")
+@ROUTER.get("/supply_levels")
 async def get_supply_levels(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
@@ -116,7 +115,7 @@ async def get_supply_levels(
     """
     return await get_available_supply_levels(db)
 
-@router.get("/planning_areas")
+@ROUTER.get("/planning_areas")
 async def get_planning_areas(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
@@ -134,7 +133,7 @@ async def get_planning_areas(
     """
     return await get_available_planning_areas(db)
 
-@router.get("/physicians")
+@ROUTER.get("/physicians")
 async def get_physicians(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
@@ -152,14 +151,14 @@ async def get_physicians(
     """
     return await get_available_physicians(db)
 
-@router.get("/ui_settings")
+@ROUTER.get("/ui_settings")
 async def get_ui_settings(user: Annotated[User, Depends(get_current_user)]):
     return {
         "storeParameters": False,
         "loadParameters": False
     }
 
-@router.get("/analysis_settings")
+@ROUTER.get("/analysis_settings")
 async def get_analysis_settings(user: Annotated[User, Depends(get_current_user)]):
     return {
         "statistics": {
@@ -171,7 +170,7 @@ async def get_analysis_settings(user: Annotated[User, Depends(get_current_user)]
         "scenario": True
     }
 
-@router.get("/range_limits")
+@ROUTER.get("/range_limits")
 async def get_range_limits(user: Annotated[User, Depends(get_current_user)]):
     return {
         "min": 0,

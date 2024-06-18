@@ -2,16 +2,12 @@
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from shapely import contains_xy
-import asyncio
-import time
 from typing import Annotated
 
 from functions.population import get_population_values
 from functions.physicians import get_physicians
 from functions.planning_areas import get_planning_area
 from functions.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
-from helpers.util import get_extent
 from filters.user import get_current_user, User
 from services.method import get_method_service, IMethodService, Infrastructure
 from services.database import AsyncSession, get_db_session
@@ -45,13 +41,10 @@ async def spatial_access_api(
         return {"error": "invalid request"}
     buffer_query = query.buffer(0.2)
 
-    t1 = time.time()
     if req.population_indizes is None or req.population_type is None:
         population_locations, population_weights = await get_population_values(db, query=buffer_query, indices=req.population_grid_indices)
     else:
         population_locations, population_weights = await get_population_values(db, query=buffer_query, indices=req.population_grid_indices, typ=req.population_type, age_groups=req.population_indizes)
-    t2 = time.time()
-    print(f"time to load population: {t2-t1}")
     facility_points, facility_weights = await get_physicians(db, buffer_query, req.facility_type, req.facility_capacity)
     distance_decay = get_distance_decay(req.travel_mode, req.decay_type, req.supply_level, req.facility_type)
     travel_mode = req.travel_mode
