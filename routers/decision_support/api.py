@@ -10,13 +10,14 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from models.population import get_population_values
-from models.facilities import get_facility
+from functions.population import get_population_values
+from functions.facilities import get_facility
 from helpers.util import get_query_from_extent, get_buffered_query
 from filters.user import get_current_user, User
 from helpers.dummy_decay import get_dummy_decay
 from services.method import get_method_service, IMethodService, Infrastructure
 from services.session import get_state, SessionStorage, Session
+from services.database import AsyncSession, get_db_session
 
 ROUTER = APIRouter()
 
@@ -54,18 +55,19 @@ async def decision_support_api(
         req: MultiCriteriaRequest,
         method_service: Annotated[IMethodService, Depends(get_method_service)],
         state: Annotated[SessionStorage, Depends(get_state)],
-        user: Annotated[User, Depends(get_current_user)]
+        user: Annotated[User, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
     if req.population_indizes is None or req.population_type is None:
-        population_locations, population_weights = get_population_values(indices=req.population_grid_indices)
+        population_locations, population_weights = await get_population_values(db, indices=req.population_grid_indices)
     else:
-        population_locations, population_weights = get_population_values(indices=req.population_grid_indices, typ=req.population_type, age_groups=req.population_indizes)
+        population_locations, population_weights = await get_population_values(db, indices=req.population_grid_indices, typ=req.population_type, age_groups=req.population_indizes)
 
     query = get_query_from_extent(req.envelop)
     infrastructures = {}
     for name, param in req.infrastructures.items():
         buffer_query = get_buffered_query(query, req.travel_mode, param.distance_decay)
-        facility_points, facility_weights = get_facility(param.facility_type, buffer_query)
+        facility_points, facility_weights = await get_facility(db, param.facility_type, buffer_query)
         infrastructures[name] = Infrastructure(param.infrastructure_weight, param.distance_decay, param.cutoff_points, facility_points, facility_weights)
 
     task = asyncio.create_task(method_service.calcMultiCriteria(population_locations, population_weights, infrastructures, req.travel_mode))
@@ -286,14 +288,15 @@ class FeaturesRequest(BaseModel):
 @ROUTER.post("/features")
 async def scenario_features_api(
         req: FeaturesRequest,
-        user: Annotated[User, Depends(get_current_user)]
+        user: Annotated[User, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
     query = get_query_from_extent(req.envelop)
 
     data = {}
     for name, param in req.infrastructures.items():
         buffer_query = get_buffered_query(query, req.travel_mode, param.distance_decay)
-        facility_points, facility_weights = get_facility(param.facility_type, buffer_query)
+        facility_points, facility_weights = await get_facility(db, param.facility_type, buffer_query)
         features = []
         for p, w in zip(facility_points, facility_weights):
             features.append({

@@ -7,14 +7,14 @@ import asyncio
 import time
 from typing import Annotated
 
-from models.population import get_population_values
-from models.physicians import get_physicians
-from models.planning_areas import get_planning_area
-from models.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
+from functions.population import get_population_values
+from functions.physicians import get_physicians
+from functions.planning_areas import get_planning_area
+from functions.travel_modes import get_distance_decay, is_valid_travel_mode, get_default_travel_mode
 from helpers.util import get_extent
 from filters.user import get_current_user, User
 from services.method import get_method_service, IMethodService, Infrastructure
-
+from services.database import AsyncSession, get_db_session
 
 ROUTER = APIRouter()
 
@@ -37,21 +37,22 @@ class SpatialAccessRequest(BaseModel):
 async def spatial_access_api(
         req: SpatialAccessRequest,
         method_service: Annotated[IMethodService, Depends(get_method_service)],
-        user: Annotated[User, Depends(get_current_user)]
+        user: Annotated[User, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
-    query = get_planning_area(req.planning_area)
+    query = await get_planning_area(db, req.planning_area)
     if query is None:
         return {"error": "invalid request"}
     buffer_query = query.buffer(0.2)
 
     t1 = time.time()
     if req.population_indizes is None or req.population_type is None:
-        population_locations, population_weights = get_population_values(query=buffer_query, indices=req.population_grid_indices)
+        population_locations, population_weights = await get_population_values(db, query=buffer_query, indices=req.population_grid_indices)
     else:
-        population_locations, population_weights = get_population_values(query=buffer_query, indices=req.population_grid_indices, typ=req.population_type, age_groups=req.population_indizes)
+        population_locations, population_weights = await get_population_values(db, query=buffer_query, indices=req.population_grid_indices, typ=req.population_type, age_groups=req.population_indizes)
     t2 = time.time()
     print(f"time to load population: {t2-t1}")
-    facility_points, facility_weights = get_physicians(buffer_query, req.facility_type, req.facility_capacity)
+    facility_points, facility_weights = await get_physicians(db, buffer_query, req.facility_type, req.facility_capacity)
     distance_decay = get_distance_decay(req.travel_mode, req.decay_type, req.supply_level, req.facility_type)
     travel_mode = req.travel_mode
     if not is_valid_travel_mode(travel_mode):

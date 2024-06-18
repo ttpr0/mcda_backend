@@ -6,11 +6,12 @@ from shapely import Polygon
 from typing import Annotated
 import asyncio
 
-from models.population import get_population
-from models.facilities import get_facility
+from functions.population import get_population
+from functions.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
 from filters.user import get_current_user, User
+from services.database import AsyncSession, get_db_session
 from oas_api.aggregate_query import calcAggregateQuery
 from oas_api.gravity import calcGravity
 
@@ -30,12 +31,16 @@ class SpatialAnalysisRequest(BaseModel):
 
 
 @router.post("/grid")
-async def spatial_analysis_api(req: SpatialAnalysisRequest, user: Annotated[User, Depends(get_current_user)]):
+async def spatial_analysis_api(
+        req: SpatialAnalysisRequest,
+        user: Annotated[User, Depends(get_current_user)],
+        session: Annotated[AsyncSession, Depends(get_db_session)],
+    ):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    population_points, utm_points, population_weights = get_population(query)
-    facility_points, facility_weights = get_facility(req.facility_type, query.buffer(0.2))
+    population_points, utm_points, population_weights = await get_population(session, query)
+    facility_points, facility_weights = await get_facility(session, req.facility_type, query.buffer(0.2))
 
     # task = asyncio.create_task(calcAggregateQuery(
     #     population_points, population_weights, facility_points, facility_weights, req.range_max, "mean"))

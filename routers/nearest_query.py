@@ -8,10 +8,11 @@ import numpy as np
 import uuid
 from typing import Annotated
 
-from models.population import get_population
-from models.facilities import get_facility
+from functions.population import get_population
+from functions.facilities import get_facility
 from helpers.util import get_extent
 from filters.user import get_current_user, User
+from services.database import AsyncSession, get_db_session
 from oas_api.n_nearest_query import calcNearestQuery, calcNearestQuery2
 
 
@@ -98,12 +99,16 @@ class NearestQueryStatisticsRequest(BaseModel):
     envelop: tuple[float, float, float, float] | None
 
 @router.post("")
-async def getNearestQuery(req: NearestQueryRequest, user: Annotated[User, Depends(get_current_user)]):
+async def getNearestQuery(
+        req: NearestQueryRequest,
+        user: Annotated[User, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db_session)],
+    ):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    facility_points, facility_weights = get_facility(req.facility, query.buffer(0.2))
-    population_points, utm_points, population_weights = get_population(query)
+    facility_points, facility_weights = await get_facility(db, req.facility, query.buffer(0.2))
+    population_points, utm_points, population_weights = await get_population(db, query)
 
     guid = str(uuid.uuid1())
 

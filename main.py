@@ -18,6 +18,7 @@ from routers.decision_support import router as decision_support_router
 from routers.data import router as data_router
 from services.session import init_state
 from services.profile import init_profile_manager
+from services.database import init_database
 from helpers.log_formatter import ColorFormatter
 
 app = FastAPI()
@@ -30,11 +31,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def startup_event():
+async def startup_event():
     logging.info("Start loading state...")
     init_state()
     logging.info("Start loading profiles...")
     init_profile_manager()
+    logging.info("Start loading database...")
+    await init_database()
 
 app.add_event_handler("startup", startup_event)
 
@@ -45,8 +48,6 @@ app.include_router(spatial_analysis_router, prefix="/v1/spatial_analysis")
 app.include_router(app_state_router, prefix="/v1/state")
 app.include_router(data_router, prefix="/v1/data")
 app.include_router(others_router, prefix="/v1")
-
-
 
 if __name__ == '__main__':
     logger = logging.getLogger()

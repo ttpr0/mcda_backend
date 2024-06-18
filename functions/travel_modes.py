@@ -1,49 +1,14 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-DEFAULT_TRAVEL_MODE = "driving-car"
-TRAVEL_MODES = {
-    "driving-car": {
-        "text": "travelModes.pkw",
-        "valid": True
-    },
-    "walking-foot": {
-        "text": "travelModes.fuss",
-        "valid": False
-    },
-    "public-transit": {
-        "text": "travelModes.opnv",
-        "valid": False
-    },
-}
-
-def get_default_travel_mode() -> str:
-    return DEFAULT_TRAVEL_MODE
-
-def get_available_travelmodes():
-    return TRAVEL_MODES
+TRAVEL_MODES = ["driving-car", "walking-foot", "public-transit"]
 
 def is_valid_travel_mode(travel_mode: str) -> bool:
     if travel_mode not in TRAVEL_MODES:
         return False
-    item = TRAVEL_MODES[travel_mode]
-    if item["valid"] is False:
-        return False
     return True
 
-DISTANCE_DECAYS = {
-    "linear": {
-        "text": "distanceDecays.linear"
-    },
-    "patient_behavior": {
-        "text": "distanceDecays.patientBehavior"
-    },
-    "minimum_standards": {
-        "text": "distanceDecays.minimumStandards"
-    }
-}
-
-def get_available_decays():
-    return DISTANCE_DECAYS
+def get_default_travel_mode() -> str:
+    return "driving-car"
 
 def get_distance_decay(travel_mode: str, decay_type: str, supply_level: str, facility_type: str) -> dict:
     """Returns distance decay for parameters as (ranges, factors) tuple

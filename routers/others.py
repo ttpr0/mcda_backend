@@ -1,25 +1,23 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 import random
 import asyncio
 from shapely import Polygon
-from typing import Any
-import numpy as np
-import json
-import requests
+from typing import Annotated
 
 import config
-from models.population import get_population
-from models.facilities import get_facility
+from functions.population import get_population
+from functions.facilities import get_facility
 from helpers.util import get_extent
 from helpers.responses import GridFeature
-
+from services.database import AsyncSession, get_db_session
 from oas_api.fca import calcFCA
 from oas_api.n_nearest_query import calcNearestQuery
 from oas_api.aggregate_query import calcAggregateQuery
 from oas_api.gravity import calcGravity
+from helpers.access import calcFCA3, calcRange
 
 router = APIRouter()
 
@@ -33,17 +31,25 @@ class FCARequest(BaseModel):
 
 
 @router.post("/fca/grid")
-async def fca_api(req: FCARequest):
+async def fca_api(
+        req: FCARequest,
+        session: Annotated[AsyncSession, Depends(get_db_session)],
+    ):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    points, utm_points, weights = get_population(query)
+    points, utm_points, weights = await get_population(session, query)
 
     # facility_weights = np.random.randint(1, 100, size=(len(req.facility_locations),)).tolist()
-    facility_weights: list[float] = [1000] * len(req.facility_locations)
+    # facility_weights: list[float] = [1000] * len(req.facility_locations)
+    facility_weights: list[int] = [1000] * len(req.facility_locations)
 
-    task = asyncio.create_task(calcFCA(
-        points, weights, req.facility_locations, facility_weights, req.ranges, req.range_factors, req.mode))
+    # task = asyncio.create_task(calcFCA(
+    #     points, weights, req.facility_locations, facility_weights, req.ranges, req.range_factors, req.mode))
+    # task = asyncio.create_task(calcFCA3(
+    #     points, weights, req.facility_locations, facility_weights, req.ranges[-1], req.mode))
+    task = asyncio.create_task(calcRange(
+        points, req.facility_locations[0], int(req.ranges[-1]), req.mode))
 
     features: list = []
     minx, miny, maxx, maxy = get_extent(utm_points)
@@ -51,9 +57,9 @@ async def fca_api(req: FCARequest):
     accessibilities = await task
     min_val = 1000000000
     max_val = -1000000000
-    for i, p in enumerate(utm_points):
+    for i, p in enumerate(points):
         access: float = accessibilities[i]
-        if access >= 0:
+        if access > 0:
             if access > max_val:
                 max_val = access
             if access < min_val:
@@ -84,11 +90,14 @@ class NearestQueryRequest(BaseModel):
 
 
 @router.post("/queries/n_nearest/grid")
-async def nnearest_api(req: NearestQueryRequest):
+async def nnearest_api(
+        req: NearestQueryRequest,
+        session: Annotated[AsyncSession, Depends(get_db_session)],
+    ):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    points, utm_points, weights = get_population(query)
+    points, utm_points, weights = await get_population(session, query)
 
     facility_weights: list[float] = [0.0] * len(req.facility_locations)
     for i in range(len(facility_weights)):
@@ -125,11 +134,14 @@ class AggregateQueryRequest(BaseModel):
 
 
 @router.post("/queries/aggregate/grid")
-async def aggregate_api(req: AggregateQueryRequest):
+async def aggregate_api(
+        req: AggregateQueryRequest,
+        session: Annotated[AsyncSession, Depends(get_db_session)],
+    ):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    points, utm_points, weights = get_population(query)
+    points, utm_points, weights = await get_population(session, query)
 
     facility_weights: list[float] = [0.0] * len(req.facility_locations)
     for i in range(len(facility_weights)):
@@ -166,11 +178,14 @@ class GravityRequest(BaseModel):
 
 
 @router.post("/accessibility/gravity/grid")
-async def gravity_api(req: GravityRequest):
+async def gravity_api(
+        req: GravityRequest,
+        session: Annotated[AsyncSession, Depends(get_db_session)],
+    ):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    points, utm_points, weights = get_population(query)
+    points, utm_points, weights = await get_population(session, query)
 
     task = asyncio.create_task(calcGravity(
         points, weights, req.facility_locations, [], req.ranges, req.range_factors))
@@ -205,12 +220,15 @@ class Gravity2Request(BaseModel):
     range_factors: list[float]
 
 @router.post("/accessibility/gravity2/grid")
-async def gravity2_api(req: Gravity2Request):
+async def gravity2_api(
+        req: Gravity2Request,
+        session: Annotated[AsyncSession, Depends(get_db_session)],
+    ):
     ll = (req.envelop[0], req.envelop[1])
     ur = (req.envelop[2], req.envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
-    population_points, utm_points, population_weights = get_population(query, req.population_type, req.population_indizes)
-    facility_points, facility_weights = get_facility(req.facility, query.buffer(0.2))
+    population_points, utm_points, population_weights = await get_population(session, query, req.population_type, req.population_indizes) # type: ignore
+    facility_points, facility_weights = await get_facility(session, req.facility, query.buffer(0.2))
 
     task = asyncio.create_task(calcGravity(
         population_points, population_weights, facility_points, [], req.ranges, req.range_factors))

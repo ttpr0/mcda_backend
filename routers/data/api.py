@@ -10,12 +10,13 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from models.population import get_population_geometry
-from models.facilities import get_facility
-from models.planning_areas import get_planning_area
+from functions.population import get_population_geometry
+from functions.facilities import get_facility
+from functions.planning_areas import get_planning_area
 from helpers.util import get_extent, get_query_from_extent, get_buffered_query
 from filters.user import get_current_user, User
 from services.session import get_state, SessionStorage, Session
+from services.database import AsyncSession, get_db_session
 
 ROUTER = APIRouter()
 
@@ -30,17 +31,18 @@ class PopulationGeometryRequest(BaseModel):
 async def population_geometry_api(
         req: PopulationGeometryRequest,
         state: Annotated[SessionStorage, Depends(get_state)],
-        user: Annotated[User, Depends(get_current_user)]
+        user: Annotated[User, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
     if req.planning_area is not None:
-        query = get_planning_area(req.planning_area)
+        query = await get_planning_area(db, req.planning_area)
         if query is None:
             return {"error": "invalid request"}
     elif req.envelop is not None:
         query = get_query_from_extent(req.envelop)
     else:
         return {"error": "invalid request"}
-    grid_indices, utm_points = get_population_geometry(query, req.population_type)
+    grid_indices, utm_points = await get_population_geometry(db, query, req.population_type)
 
     features: list = []
     indices: list[int] = []
