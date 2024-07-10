@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Utility functions for available traval-modes and distance decays
+"""
+
 TRAVEL_MODES = ["driving-car", "walking-foot", "public-transit"]
 
 def is_valid_travel_mode(travel_mode: str) -> bool:

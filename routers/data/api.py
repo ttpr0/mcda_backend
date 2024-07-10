@@ -1,14 +1,12 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Module containg the actual endpoints.
+"""
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from pydantic import BaseModel
-from shapely import Polygon
-from typing import Annotated, cast
-import asyncio
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
+from typing import Annotated
 
 from functions.population import get_population_geometry
 from functions.facilities import get_facility
@@ -34,6 +32,8 @@ async def population_geometry_api(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
+    """Retrieves population geometry in grid coordinates from the db.
+    """
     if req.planning_area is not None:
         query = await get_planning_area(db, req.planning_area)
         if query is None:

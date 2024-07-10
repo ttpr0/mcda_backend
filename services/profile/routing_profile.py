@@ -1,9 +1,14 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Profile class for routing graphs.
+"""
+
 import numpy as np
 import pyaccess
 
 class RoutingProfile:
+    """Profile class for routing graphs.
+    """
     _graph: pyaccess.Graph
     _weight: str
 

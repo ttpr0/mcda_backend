@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""IMethodService implementations using pyaccess.
+"""
+
 from .util import get_distance_decay, Infrastructure
 from services.profile import ProfileManager
 

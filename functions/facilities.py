@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Utility functions to retrive facilities from db.
+"""
+
 from sqlalchemy import select
 from geoalchemy2.shape import from_shape, to_shape
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +11,19 @@ from shapely import Point, Polygon
 from .util import get_table
 
 async def get_facility(session: AsyncSession, facility_name: str, envelop: Polygon) -> tuple[list[tuple[float, float]], list[float]]:
+    """Extract facility locations and weights from the database.
+
+    Args:
+        session: sqlalchemy session
+        facility_name: name of the facility
+        envelop: envelop to filter facilities
+
+    Returns:
+        list of locations and weights
+
+    Note:
+        - a table facilities_list must exist in the database (containing metadata about existing facilites)
+    """
     locations = []
     weights = []
     location_set = set()
@@ -65,7 +81,19 @@ async def _get_facility_group_by_id(session: AsyncSession, group_id: int) -> tup
     return None
 
 async def get_available_facilities(session: AsyncSession) -> dict:
-    # return FACILITIES
+    """Retrives all available facilities.
+
+    Args:
+        session: sqlalchemy session
+
+    Returns:
+        dict of available facilities (for format see dva-fe example state)
+
+    Note:
+        - this function returns data as expected by dva-fe (can be put into state directly)
+        - future changes in the frontend might involve updating this function
+        - a table facilities_list must exist in the database (containing metadata about existing facilites)
+    """
     facilities = {}
     facilities_table = get_table("facilities_list")
     if facilities_table is None:

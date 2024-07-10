@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Unrelated utility functions
+"""
+
 from shapely import Polygon
 from shapely.ops import transform
 from pyproj import Transformer
@@ -7,6 +10,14 @@ from pyproj import Transformer
 from .dummy_decay import get_max_distance
 
 def get_extent(points: list[tuple[float, float]]) -> tuple[float, float, float, float]:
+    """Computes the extent of a list of points.
+
+    Args:
+        points: list of points
+
+    Returns:
+        extent
+    """
     minx = 1000000000
     maxx = -1
     miny = 1000000000
@@ -23,12 +34,24 @@ def get_extent(points: list[tuple[float, float]]) -> tuple[float, float, float, 
     return minx, miny, maxx, maxy
 
 def get_query_from_extent(envelop: tuple[float, float, float, float]) -> Polygon:
+    """Generates a query polygon from an extent.
+    """
     ll = (envelop[0], envelop[1])
     ur = (envelop[2], envelop[3])
     query = Polygon(((ll[0], ll[1]), (ll[0], ur[1]), (ur[0], ur[1]), (ur[0], ll[1])))
     return query
 
 def get_buffered_query(query: Polygon, travel_mode: str, decay: dict) -> Polygon:
+    """Buffers a query polygon with an appropriate buffer size.
+
+    Args:
+        query: query polygon
+        travel_mode: travel mode
+        decay: decay parameters
+
+    Returns:
+        buffered query
+    """
     project = Transformer.from_crs("epsg:4326", "epsg:25832", always_xy=True).transform
     utm_query: Polygon = transform(project, query)
     time = get_max_distance(decay)
@@ -47,6 +70,11 @@ def get_buffered_query(query: Polygon, travel_mode: str, decay: dict) -> Polygon
     return query_buffer
 
 def deprecated(func):
+    """Deprecate a function.
+
+    Note:
+        - this should be used as a decorator
+    """
     def wrapped(*args, **kwargs):
         print(f"DeprecationWarning: Outdated function \"{func.__name__}\" called. Consider updating your code.")
         return func(*args, **kwargs)

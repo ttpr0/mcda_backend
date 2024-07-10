@@ -1,5 +1,12 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Utility functions to interact with the tables of the db.
+
+Note:
+    - these functions are only neccessary for non ORM cases
+    - tables that dont need be dynamically created/existent should be handled though orm
+"""
+
 from sqlalchemy import Table
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import CreateTable

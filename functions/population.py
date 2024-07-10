@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Utility functions to retrive population-grid from db.
+"""
+
 from sqlalchemy import select, func
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import from_shape, to_shape
@@ -11,6 +14,8 @@ from helpers.util import deprecated
 
 @deprecated
 async def get_population(session: AsyncSession, query: Polygon, typ: str = 'standard_all', age_groups: list[str] = []) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[int]]:
+    """Only kept for backwards compatibility. If it is not used anymore, please remove it.
+    """
     locations: list[tuple[float, float]] = []
     utm_locations: list[tuple[float, float]] = []
     weights: list[int] = []
@@ -71,6 +76,21 @@ async def get_population_values(session: AsyncSession, query: Polygon | None = N
     """Retrives the population data (location and weight) for a given population dataset.
 
     Result contains population cells within the query extent or part of indices-list. First n values of the result are garanteed to be ordered by indices-list (e.g. [indices[0], indices[1], ..., indices[-1], rest...]).
+    
+    Args:
+        session: database session
+        query: query extent (optional, only used if indices is None)
+        indices: list of population grid-cell indices to get population data for 
+        typ: population type (e.g. standard, kita_schul)
+        age_groups: list of age groups (keys of population entries in db table)
+
+    Returns:
+        locations: list of population locations (centroid of cell)
+        weights: list of population weights (sum of population in cell)
+
+    Note:
+        - this function should be called to retrive actual population data for accessibility calculations
+        - most common workflow is to first retrive geometry using "get_population_geometry" for visualization purposes and then call this function to compute accessibility results
     """
     if query is None and indices is None:
         return [], []
@@ -153,6 +173,21 @@ async def get_population_values(session: AsyncSession, query: Polygon | None = N
     return locations, weights
 
 async def get_population_geometry(session: AsyncSession, query: Polygon, typ: str = 'standard_all') -> tuple[list[int], list[tuple[float, float]]]:
+    """Returns list of population grid-cell indices and list of population locations.
+
+    Args:
+        session: database session
+        query: query extent
+        typ: population type (e.g. standard, kita_schul)
+
+    Returns:
+        indices: list of population grid-cell indices (can be used in calls to "get_population_values")
+        utm_locations: list of population locations (centroid of cell in utm32 coordinate system)
+
+    Note:
+        - this function currently returns locations as points in utm32 as they are directly stored in db tables
+        - future versions might return grid-cell geometry (instead of centroid) and take an optional crs parameter to define the crs of the returned geometry
+    """
     indices: list[int] = []
     utm_locations: list[tuple[float, float]] = []
 
@@ -188,8 +223,15 @@ async def get_population_geometry(session: AsyncSession, query: Polygon, typ: st
         utm_locations.append((row[1], row[2]))
     return indices, utm_locations
 
-async def get_available_population(session: AsyncSession):
-    # return POPULATION_VALUES
+async def get_available_population(session: AsyncSession) -> dict:
+    """Returns a list of available population types.
+
+    Args:
+        session: database session
+
+    Returns:
+        list of available population types (as expected by dva-fe)
+    """
     populations = {}
     list_table = get_table("population_list")
     if list_table is None:

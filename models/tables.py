@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Table specifications for the DVA database (most of them)
+"""
+
 from sqlalchemy import Column, Integer, String, Float, ARRAY, Boolean
 from geoalchemy2 import Geometry
 

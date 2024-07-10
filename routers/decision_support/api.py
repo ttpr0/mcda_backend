@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Module containing the actual endpoints.
+"""
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -26,6 +29,8 @@ async def create_session(
         state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
+    """Creates a new state session and returns the session_id.
+    """
     session_id = state.new_session(user.get_name())
     return {
         "session_id": session_id
@@ -58,6 +63,11 @@ async def decision_support_api(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
+    """Computes the multi-criteria decision support.
+
+    Note:
+        - results and parameters are also stored in the session state
+    """
     if req.population_indizes is None or req.population_type is None:
         population_locations, population_weights = await get_population_values(db, indices=req.population_grid_indices)
     else:
@@ -211,6 +221,8 @@ async def stat_3_api(
         state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
+    """
+    """
     # get session state
     session = state.get_session(user.get_name(), req.session_id)
     counts: dict[str, list[int]] = session["counts"]
@@ -248,6 +260,8 @@ async def hotspot_api(
         state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
+    """Creates the hotspot analysis plot
+    """
     # get session state
     session = state.get_session(user.get_name(), req.session_id)
     access: dict[str, list[float]] = session["accessibilities"]
@@ -291,6 +305,8 @@ async def scenario_features_api(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
+    """Returns the available facilities for the scenario mode.
+    """
     query = get_query_from_extent(req.envelop)
 
     data = {}
@@ -336,6 +352,8 @@ async def scenario_api(
         state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
+    """Recomputes the multi-criteria for the given scenario.
+    """
     # get session state
     session = state.get_session(user.get_name(), req.session_id)
     population_locations: list[tuple[float, float]]
@@ -381,6 +399,8 @@ async def scenario_optimization_api(
         state: Annotated[SessionStorage, Depends(get_state)],
         user: Annotated[User, Depends(get_current_user)]
     ):
+    """Optimizes the scenario using set-coverage optimization.
+    """
     # get session state
     session = state.get_session(user.get_name(), req.session_id)
     population_locations: list[tuple[float, float]]

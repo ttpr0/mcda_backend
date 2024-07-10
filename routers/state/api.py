@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Module containing the actual endpoints.
+"""
+
 from typing import Annotated
 from fastapi import APIRouter, Request, HTTPException, Depends
 

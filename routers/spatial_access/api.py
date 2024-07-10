@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Module containing the actual endpoints.
+"""
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Annotated
@@ -36,6 +39,8 @@ async def spatial_access_api(
         user: Annotated[User, Depends(get_current_user)],
         db: Annotated[AsyncSession, Depends(get_db_session)],
     ):
+    """Computes the 2sfca accessibility.
+    """
     query = await get_planning_area(db, req.planning_area)
     if query is None:
         return {"error": "invalid request"}

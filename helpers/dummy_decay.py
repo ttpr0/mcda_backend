@@ -1,3 +1,8 @@
+# Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
+
+"""Dummy class to provide an implementation of IDistanceDecay
+"""
+
 from typing import Protocol
 
 from services.method.util import get_distance_decay

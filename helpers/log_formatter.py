@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Formatter for logging to make logging look pretty
+"""
+
 import logging
 
 class ColorFormatter(logging.Formatter):

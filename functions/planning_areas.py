@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Utility functions to retrive planning areas from db.
+"""
+
 from sqlalchemy import select
 from geoalchemy2.shape import from_shape, to_shape
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +12,15 @@ from .util import get_table
 
 
 async def get_planning_area(session: AsyncSession, planning_area: str) -> Polygon | None:
+    """Retrives a planning-area by name.
+
+    Args:
+        session: db session
+        planning_area: name of the planning-area
+
+    Returns:
+        Polygon of the planning-area
+    """
     area_table = get_table("planning_areas")
     if area_table is None:
         return None
@@ -34,7 +46,14 @@ async def _get_supply_level_by_id(session: AsyncSession, supply_level_id: int) -
     return None
 
 async def get_available_supply_levels(session: AsyncSession) -> dict:
-    # return SUPPLY_LEVELS
+    """Retrives the available supply-levels.
+
+    Args:
+        session: db session
+
+    Returns:
+        dict of available supply-levels (as expected by dva-fe)
+    """
     supply_levels = {}
     level_table = get_table("supply_level_list")
     if level_table is None:
@@ -50,7 +69,14 @@ async def get_available_supply_levels(session: AsyncSession) -> dict:
     return supply_levels
 
 async def get_available_planning_areas(session: AsyncSession) -> dict:
-    # return PLANNING_AREAS
+    """Retrives the available planning-areas.
+
+    Args:
+        session: db session
+
+    Returns:
+        dict of available planning-areas (as expected by dva-fe)
+    """
     planning_areas = {}
     area_table = get_table("planning_areas")
     if area_table is None:

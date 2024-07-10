@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Utility functions to retrive physicians from db.
+"""
+
 from sqlalchemy import select
 from geoalchemy2.shape import from_shape, to_shape
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +13,21 @@ from .planning_areas import _get_supply_level_by_id
 
 
 async def get_physicians(session: AsyncSession, query: Polygon, physician_name: str, capacity_type: str) -> tuple[list[tuple[float, float]], list[float]]:
+    """Retrives physicians from db.
+
+    Args:
+        session: db session
+        query: extent to query physicians
+        physician_name: physician name
+        capacity_type: capacity type (e.g. location-based, scope of participation)
+
+    Returns:
+        lists of locations and weights
+
+    Note:
+        - a table physicians_list must exist in the database (containing metadata about existing physicians)
+        - a table physicians_locations must exist in the database (containing the actual locations of physicians)
+    """
     locations = []
     weights = []
 
@@ -67,7 +85,19 @@ async def get_physicians(session: AsyncSession, query: Polygon, physician_name: 
     return (locations, weights)
 
 async def get_available_physicians(session: AsyncSession) -> dict:
-    # return PHYSICIAN_GROUPS
+    """Retrives available physicians from db.
+
+    Args:
+        session: db session
+
+    Returns:
+        list of available physicians
+
+    Note:
+        - the format of returned data is expected by dva-fe (can be put into state directly)
+        - future changes in the frontend might involve updating this function
+        - a table physicians_list must exist in the database (containing metadata about existing physicians)
+    """
     physician_groups = {}
     physician_table = get_table("physicians_list")
     if physician_table is None:

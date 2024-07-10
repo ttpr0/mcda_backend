@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Utility functions to build routing graphs.
+"""
+
 import numpy as np
 import pyaccess
 

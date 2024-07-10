@@ -11,6 +11,9 @@ from sqlalchemy import insert, delete, Column, Integer, String, Float
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import from_shape
 
+import sys
+sys.path.append("./")
+
 from models import ENGINE, get_table, create_table
 
 POPULATION_FILE = "./files/population.csv"
@@ -20,7 +23,9 @@ PLANNING_AREAS_DIR = "./files/planning_areas"
 
 def insertAdminUser() -> None:
     users = [
-        ("admin", "dvan@admin.org", "admin", "password")
+        ("admin", "dvan@admin.org", "admin", "password"),
+        ("user", "dvan@user.org", "user", "password"),
+        ("dummy", "dvan@dummy.org", "dummy", "password")
     ]
     with Session(ENGINE) as session:
         user_table = get_table("users")
@@ -403,18 +408,18 @@ def insertFacilities():
 
 
 if __name__ == "__main__":
-    print("start inserting Physicians")
-    insertPhysicians()
-    print("start inserting Planning Areas")
-    insertPlanningAreas()
-    print("start inserting Physician Lists")
-    insertPhysiciansList()
-    print("start inserting Supply Levels")
-    insertSupplyLevels()
+    # print("start inserting Physicians")
+    # insertPhysicians()
+    # print("start inserting Planning Areas")
+    # insertPlanningAreas()
+    # print("start inserting Physician Lists")
+    # insertPhysiciansList()
+    # print("start inserting Supply Levels")
+    # insertSupplyLevels()
     print("start inserting Admin User")
     insertAdminUser()
-    print("start inserting Population")
-    insertPopulation()
-    print("start inserting Facilities")
-    insertFacilityGroups()
-    insertFacilities()
+    # print("start inserting Population")
+    # insertPopulation()
+    # print("start inserting Facilities")
+    # insertFacilityGroups()
+    # insertFacilities()

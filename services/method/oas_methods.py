@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""IMethodService implementation using the OAS.
+"""
+
 import asyncio
 import json
 import requests

@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Session state manager
+"""
+
 from __future__ import annotations
 
 import string
@@ -15,6 +18,11 @@ def _generate_session_id() -> str:
     return sid
 
 class Session:
+    """Session object to interact with session data.
+
+    Note:
+        - in future this might be replaced by a proper session db (e.g. redis)
+    """
     _data: dict[str, Any]
     def __init__(self, data: dict[str, Any]):
         self._data = data
@@ -29,6 +37,8 @@ class Session:
         pass
 
 class SessionStorage:
+    """Session storage class.
+    """
     _sessions: dict[tuple[str, str], tuple[datetime, dict[str, Any]]]
 
     def __init__(self):
@@ -79,11 +89,18 @@ class SessionStorage:
 STATE = None
 
 def init_state():
+    """Initializes the session state.
+    """
     global STATE
     STATE = SessionStorage()
     STATE.periodically_clear(60 * 60, 24 * 60)
 
 def get_state() -> SessionStorage:
+    """Returns the session state singleton.
+
+    Note:
+        - This can be used as a fastapi dependency
+    """
     global STATE
     if STATE is None:
         raise ValueError("This should not have happened.")

@@ -1,5 +1,8 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Module containing the actual service.
+"""
+
 from typing import Protocol
 import numpy as np
 import pyaccess
@@ -10,6 +13,8 @@ from .transit_profile import TransitProfile
 from .builders import build_driving_car, build_walking_foot, build_public_transit
 
 class IRoutingProfile(Protocol):
+    """Routing profile interface
+    """
     def calc_reachability(self, dem_points: list[tuple[float, float]], sup_points: list[tuple[float, float]], decay: pyaccess._pyaccess_ext.IDistanceDecay) -> tuple[np.ndarray, np.ndarray]:
         ...
 
@@ -20,12 +25,16 @@ class IRoutingProfile(Protocol):
         ...
 
 class Profile:
+    """Profile class
+    """
     _weights: list[str]
 
     def __init__(self, weights):
         self._weights = weights
 
 class ProfileManager:
+    """Profile manager class
+    """
     _graphs: dict[str, pyaccess.Graph]
     _profiles: dict[str, Profile]
 
@@ -54,6 +63,8 @@ class ProfileManager:
                 return None
 
 def _load_or_create_profiles() -> ProfileManager:
+    """Initializes the profiles from the disk or creates them from data-sources if they don't exist.
+    """
     profile_manager = ProfileManager()
     # load or create profiles
     graph_cache: dict[str, pyaccess.Graph] = {}
@@ -96,10 +107,14 @@ def _load_or_create_profiles() -> ProfileManager:
 PROFILES = None
 
 def init_profile_manager():
+    """Initializes the profiles by loading or creating them.
+    """
     global PROFILES
     PROFILES = _load_or_create_profiles()
 
 def get_profile_manager() -> ProfileManager:
+    """Returns the profile manager singleton.
+    """
     global PROFILES
     if PROFILES is None:
         raise ValueError("This should not have happened.")

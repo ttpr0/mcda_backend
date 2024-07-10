@@ -1,9 +1,14 @@
 # Copyright (C) 2023 Authors of the MCDA project - All Rights Reserved
 
+"""Profile class for public transit graphs.
+"""
+
 import numpy as np
 import pyaccess
 
 class TransitProfile:
+    """Profile class for public transit graphs.
+    """
     _graph: pyaccess.Graph
     _weekday: str
     _min_departure: int
